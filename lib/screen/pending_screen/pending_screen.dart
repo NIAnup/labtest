@@ -2,56 +2,56 @@ import 'package:flutter/material.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 
-class AcceptedRequestsScreen extends StatefulWidget {
+class PendingScreen extends StatefulWidget {
   @override
-  _AcceptedRequestsScreenState createState() => _AcceptedRequestsScreenState();
+  _PendingScreenState createState() => _PendingScreenState();
 }
 
-class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
+class _PendingScreenState extends State<PendingScreen>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
 
-  List<Map<String, dynamic>> acceptedRequests = [
+  List<Map<String, dynamic>> pendingRequests = [
     {
-      'name': 'Robert Johnson',
+      'name': 'Sarah Wilson',
       'phone': '123-456-7890',
-      'email': 'robertj@example.com',
+      'email': 'sarahw@example.com',
       'profilePic':
           'https://media.istockphoto.com/id/1392528328/photo/portrait-of-smiling-handsome-man-in-white-t-shirt-standing-with-crossed-arms.jpg?s=612x612&w=0&k=20&c=6vUtfKvHhNsK9kdNWb7EJlksBDhBBok1bNjNRULsAYs=',
-      'status': 'Accepted',
-      'acceptedDate': '2024-01-15',
+      'status': 'Pending',
+      'requestDate': '2024-01-15',
       'service': 'Blood Test',
       'location': 'Downtown Medical Center',
-      'estimatedTime': '2-3 hours',
-      'priority': 'Normal'
+      'urgency': 'Normal',
+      'estimatedTime': '2-3 hours'
     },
     {
-      'name': 'Lisa Anderson',
+      'name': 'Michael Brown',
       'phone': '987-654-3210',
-      'email': 'lisaa@example.com',
+      'email': 'michaelb@example.com',
       'profilePic':
           'https://media.istockphoto.com/id/1392528328/photo/portrait-of-smiling-handsome-man-in-white-t-shirt-standing-with-crossed-arms.jpg?s=612x612&w=0&k=20&c=6vUtfKvHhNsK9kdNWb7EJlksBDhBBok1bNjNRULsAYs=',
-      'status': 'Accepted',
-      'acceptedDate': '2024-01-15',
+      'status': 'Pending',
+      'requestDate': '2024-01-15',
       'service': 'X-Ray',
       'location': 'City Hospital',
-      'estimatedTime': '1-2 hours',
-      'priority': 'High'
+      'urgency': 'High',
+      'estimatedTime': '1-2 hours'
     },
     {
-      'name': 'David Wilson',
+      'name': 'Emily Davis',
       'phone': '555-123-4567',
-      'email': 'davidw@example.com',
+      'email': 'emilyd@example.com',
       'profilePic':
           'https://media.istockphoto.com/id/1392528328/photo/portrait-of-smiling-handsome-man-in-white-t-shirt-standing-with-crossed-arms.jpg?s=612x612&w=0&k=20&c=6vUtfKvHhNsK9kdNWb7EJlksBDhBBok1bNjNRULsAYs=',
-      'status': 'Accepted',
-      'acceptedDate': '2024-01-14',
+      'status': 'Pending',
+      'requestDate': '2024-01-14',
       'service': 'Lab Test',
       'location': 'Medical Plaza',
-      'estimatedTime': '3-4 hours',
-      'priority': 'Low'
+      'urgency': 'Low',
+      'estimatedTime': '3-4 hours'
     },
   ];
 
@@ -68,8 +68,9 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
-    
+    ).animate(CurvedAnimation(
+        parent: _animationController, curve: Curves.easeOutCubic));
+
     _animationController.forward();
   }
 
@@ -82,12 +83,13 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
   void showDetailsDialog(Map<String, dynamic> request) {
     final theme = AppTheme();
     final colors = theme.colors;
-    
+
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           elevation: 10,
           child: Container(
             constraints: BoxConstraints(
@@ -117,12 +119,12 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Profile section
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: colors.primary.withOpacity(0.1),
+                    color: colors.warning.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -134,7 +136,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: colors.primary,
+                              color: colors.warning,
                               width: 3,
                             ),
                           ),
@@ -152,9 +154,10 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                       ),
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: colors.primary,
+                          color: colors.warning,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -169,17 +172,22 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Details section
                 _buildDetailRow(Icons.phone, "Phone", request['phone'], colors),
                 _buildDetailRow(Icons.email, "Email", request['email'], colors),
-                _buildDetailRow(Icons.medical_services, "Service", request['service'], colors),
-                _buildDetailRow(Icons.location_on, "Location", request['location'], colors),
-                _buildDetailRow(Icons.calendar_today, "Accepted Date", request['acceptedDate'], colors),
-                _buildDetailRow(Icons.schedule, "Estimated Time", request['estimatedTime'], colors),
-                _buildDetailRow(Icons.priority_high, "Priority", request['priority'], colors),
+                _buildDetailRow(Icons.medical_services, "Service",
+                    request['service'], colors),
+                _buildDetailRow(
+                    Icons.location_on, "Location", request['location'], colors),
+                _buildDetailRow(Icons.calendar_today, "Request Date",
+                    request['requestDate'], colors),
+                _buildDetailRow(Icons.schedule, "Estimated Time",
+                    request['estimatedTime'], colors),
+                _buildDetailRow(
+                    Icons.priority_high, "Urgency", request['urgency'], colors),
               ],
             ),
           ),
@@ -188,7 +196,8 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, AppColors colors) {
+  Widget _buildDetailRow(
+      IconData icon, String label, String value, AppColors colors) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -224,145 +233,17 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
     );
   }
 
-  void showCompleteDialog(int index) {
-    final theme = AppTheme();
-    final colors = theme.colors;
-    
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 10,
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: ResponsiveHelper.isMobile(context) ? 350 : 450,
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Success icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colors.success.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle_rounded,
-                    color: colors.success,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // Title
-                Text(
-                  "Mark as Complete",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                    fontFamily: "uber",
-                  ),
-                ),
-                const SizedBox(height: 8),
-                
-                // Description
-                Text(
-                  "Are you sure you want to mark this request as completed?",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: colors.textSecondary,
-                    fontFamily: "uber",
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Action buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          side: BorderSide(color: colors.border),
-                        ),
-                        child: Text(
-                          "Cancel",
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontFamily: "uber",
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            acceptedRequests.removeAt(index);
-                          });
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Request marked as completed",
-                                style: TextStyle(fontFamily: "uber"),
-                              ),
-                              backgroundColor: colors.success,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.success,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "Complete",
-                          style: TextStyle(
-                            color: colors.onPrimary,
-                            fontFamily: "uber",
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   void showCancelDialog(int index) {
     final theme = AppTheme();
     final colors = theme.colors;
-    TextEditingController cancelReasonController = TextEditingController();
-    
+    TextEditingController rejectReasonController = TextEditingController();
+
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           elevation: 10,
           child: Container(
             constraints: BoxConstraints(
@@ -386,7 +267,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Title
                 Text(
                   "Cancel Request",
@@ -398,10 +279,10 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                   ),
                 ),
                 const SizedBox(height: 8),
-                
+
                 // Description
                 Text(
-                  "Please provide a reason for canceling this accepted request.",
+                  "Please provide a reason for canceling this request.",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 16,
@@ -410,10 +291,10 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Reason input
                 TextField(
-                  controller: cancelReasonController,
+                  controller: rejectReasonController,
                   maxLines: 3,
                   decoration: InputDecoration(
                     labelText: "Reason for cancellation",
@@ -428,7 +309,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                   ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Action buttons
                 Row(
                   children: [
@@ -457,7 +338,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                       child: ElevatedButton(
                         onPressed: () {
                           setState(() {
-                            acceptedRequests.removeAt(index);
+                            pendingRequests.removeAt(index);
                           });
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -535,12 +416,12 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: colors.primary.withOpacity(0.1),
+                            color: colors.warning.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            Icons.check_circle_rounded,
-                            color: colors.primary,
+                            Icons.pending_actions_rounded,
+                            color: colors.warning,
                             size: 28,
                           ),
                         ),
@@ -550,7 +431,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Accepted Requests",
+                                "Pending Requests",
                                 style: TextStyle(
                                   fontSize: isMobile ? 24 : 28,
                                   fontWeight: FontWeight.bold,
@@ -560,7 +441,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                "${acceptedRequests.length} accepted requests",
+                                "${pendingRequests.length} pending requests",
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: colors.textSecondary,
@@ -578,7 +459,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
 
               // Content section
               Expanded(
-                child: acceptedRequests.isEmpty
+                child: pendingRequests.isEmpty
                     ? _buildEmptyState(colors)
                     : ResponsiveLayout(
                         mobile: _buildMobileList(colors),
@@ -601,18 +482,18 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: colors.primary.withOpacity(0.1),
+              color: colors.warning.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.check_circle_rounded,
+              Icons.pending_actions_rounded,
               size: 64,
-              color: colors.primary,
+              color: colors.warning,
             ),
           ),
           const SizedBox(height: 24),
           Text(
-            "No Accepted Requests",
+            "No Pending Requests",
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -622,7 +503,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            "Accepted requests will appear here",
+            "New requests will appear here",
             style: TextStyle(
               fontSize: 16,
               color: colors.textSecondary,
@@ -637,9 +518,9 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
   Widget _buildMobileList(AppColors colors) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: acceptedRequests.length,
+      itemCount: pendingRequests.length,
       itemBuilder: (context, index) {
-        return _buildRequestCard(acceptedRequests[index], index, colors, true);
+        return _buildRequestCard(pendingRequests[index], index, colors, true);
       },
     );
   }
@@ -653,9 +534,9 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
         mainAxisSpacing: 16,
         childAspectRatio: 1.2,
       ),
-      itemCount: acceptedRequests.length,
+      itemCount: pendingRequests.length,
       itemBuilder: (context, index) {
-        return _buildRequestCard(acceptedRequests[index], index, colors, false);
+        return _buildRequestCard(pendingRequests[index], index, colors, false);
       },
     );
   }
@@ -669,14 +550,15 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
         mainAxisSpacing: 20,
         childAspectRatio: 1.1,
       ),
-      itemCount: acceptedRequests.length,
+      itemCount: pendingRequests.length,
       itemBuilder: (context, index) {
-        return _buildRequestCard(acceptedRequests[index], index, colors, false);
+        return _buildRequestCard(pendingRequests[index], index, colors, false);
       },
     );
   }
 
-  Widget _buildRequestCard(Map<String, dynamic> request, int index, AppColors colors, bool isMobile) {
+  Widget _buildRequestCard(Map<String, dynamic> request, int index,
+      AppColors colors, bool isMobile) {
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -719,13 +601,14 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: colors.primary,
+                                  color: colors.warning,
                                   width: 2,
                                 ),
                               ),
                               child: CircleAvatar(
                                 radius: isMobile ? 25 : 30,
-                                backgroundImage: NetworkImage(request['profilePic']),
+                                backgroundImage:
+                                    NetworkImage(request['profilePic']),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -751,7 +634,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: colors.primary,
+                                      color: colors.warning,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
@@ -769,9 +652,9 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Service info
                         Row(
                           children: [
@@ -793,9 +676,9 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 8),
-                        
+
                         // Location
                         Row(
                           children: [
@@ -819,23 +702,25 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 8),
-                        
-                        // Priority and time
+
+                        // Urgency and time
                         Row(
                           children: [
                             Icon(
                               Icons.priority_high,
                               size: 16,
-                              color: _getPriorityColor(request['priority'], colors),
+                              color:
+                                  _getUrgencyColor(request['urgency'], colors),
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              request['priority'],
+                              request['urgency'],
                               style: TextStyle(
                                 fontSize: 14,
-                                color: _getPriorityColor(request['priority'], colors),
+                                color: _getUrgencyColor(
+                                    request['urgency'], colors),
                                 fontWeight: FontWeight.w600,
                                 fontFamily: "uber",
                               ),
@@ -851,28 +736,22 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
-                        // Action buttons
+
+                        // Action buttons - only View and Cancel for pending requests
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildActionButton(
                               icon: Icons.visibility,
-                              label: "View",
+                              label: "View Details",
                               color: colors.info,
                               onPressed: () => showDetailsDialog(request),
                             ),
                             _buildActionButton(
-                              icon: Icons.check_circle,
-                              label: "Complete",
-                              color: colors.success,
-                              onPressed: () => showCompleteDialog(index),
-                            ),
-                            _buildActionButton(
                               icon: Icons.cancel,
-                              label: "Cancel",
+                              label: "Cancel Request",
                               color: colors.error,
                               onPressed: () => showCancelDialog(index),
                             ),
@@ -890,8 +769,8 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
     );
   }
 
-  Color _getPriorityColor(String priority, AppColors colors) {
-    switch (priority.toLowerCase()) {
+  Color _getUrgencyColor(String urgency, AppColors colors) {
+    switch (urgency.toLowerCase()) {
       case 'high':
         return colors.error;
       case 'normal':

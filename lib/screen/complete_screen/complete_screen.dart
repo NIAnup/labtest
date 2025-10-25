@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 
-class AcceptedRequestsScreen extends StatefulWidget {
+class CompleteScreen extends StatefulWidget {
   @override
-  _AcceptedRequestsScreenState createState() => _AcceptedRequestsScreenState();
+  _CompleteScreenState createState() => _CompleteScreenState();
 }
 
-class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
+class _CompleteScreenState extends State<CompleteScreen>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -15,43 +15,40 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
 
   List<Map<String, dynamic>> acceptedRequests = [
     {
-      'name': 'Robert Johnson',
+      'name': 'John Doe',
       'phone': '123-456-7890',
-      'email': 'robertj@example.com',
+      'email': 'johndoe@example.com',
       'profilePic':
           'https://media.istockphoto.com/id/1392528328/photo/portrait-of-smiling-handsome-man-in-white-t-shirt-standing-with-crossed-arms.jpg?s=612x612&w=0&k=20&c=6vUtfKvHhNsK9kdNWb7EJlksBDhBBok1bNjNRULsAYs=',
-      'status': 'Accepted',
-      'acceptedDate': '2024-01-15',
-      'service': 'Blood Test',
-      'location': 'Downtown Medical Center',
-      'estimatedTime': '2-3 hours',
-      'priority': 'Normal'
-    },
-    {
-      'name': 'Lisa Anderson',
-      'phone': '987-654-3210',
-      'email': 'lisaa@example.com',
-      'profilePic':
-          'https://media.istockphoto.com/id/1392528328/photo/portrait-of-smiling-handsome-man-in-white-t-shirt-standing-with-crossed-arms.jpg?s=612x612&w=0&k=20&c=6vUtfKvHhNsK9kdNWb7EJlksBDhBBok1bNjNRULsAYs=',
-      'status': 'Accepted',
-      'acceptedDate': '2024-01-15',
-      'service': 'X-Ray',
-      'location': 'City Hospital',
-      'estimatedTime': '1-2 hours',
-      'priority': 'High'
-    },
-    {
-      'name': 'David Wilson',
-      'phone': '555-123-4567',
-      'email': 'davidw@example.com',
-      'profilePic':
-          'https://media.istockphoto.com/id/1392528328/photo/portrait-of-smiling-handsome-man-in-white-t-shirt-standing-with-crossed-arms.jpg?s=612x612&w=0&k=20&c=6vUtfKvHhNsK9kdNWb7EJlksBDhBBok1bNjNRULsAYs=',
-      'status': 'Accepted',
-      'acceptedDate': '2024-01-14',
+      'status': 'Completed',
+      'completedDate': '2024-01-15',
+      'rating': 5,
       'service': 'Lab Test',
-      'location': 'Medical Plaza',
-      'estimatedTime': '3-4 hours',
-      'priority': 'Low'
+      'location': 'Downtown Medical Center'
+    },
+    {
+      'name': 'Jane Smith',
+      'phone': '987-654-3210',
+      'email': 'janesmith@example.com',
+      'profilePic':
+          'https://media.istockphoto.com/id/1392528328/photo/portrait-of-smiling-handsome-man-in-white-t-shirt-standing-with-crossed-arms.jpg?s=612x612&w=0&k=20&c=6vUtfKvHhNsK9kdNWb7EJlksBDhBBok1bNjNRULsAYs=',
+      'status': 'Completed',
+      'completedDate': '2024-01-14',
+      'rating': 4,
+      'service': 'Blood Test',
+      'location': 'City Hospital'
+    },
+    {
+      'name': 'Mike Johnson',
+      'phone': '555-123-4567',
+      'email': 'mikej@example.com',
+      'profilePic':
+          'https://media.istockphoto.com/id/1392528328/photo/portrait-of-smiling-handsome-man-in-white-t-shirt-standing-with-crossed-arms.jpg?s=612x612&w=0&k=20&c=6vUtfKvHhNsK9kdNWb7EJlksBDhBBok1bNjNRULsAYs=',
+      'status': 'Completed',
+      'completedDate': '2024-01-13',
+      'rating': 5,
+      'service': 'X-Ray',
+      'location': 'Medical Plaza'
     },
   ];
 
@@ -68,8 +65,9 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic));
-    
+    ).animate(CurvedAnimation(
+        parent: _animationController, curve: Curves.easeOutCubic));
+
     _animationController.forward();
   }
 
@@ -82,12 +80,13 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
   void showDetailsDialog(Map<String, dynamic> request) {
     final theme = AppTheme();
     final colors = theme.colors;
-    
+
     showDialog(
       context: context,
       builder: (context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           elevation: 10,
           child: Container(
             constraints: BoxConstraints(
@@ -117,7 +116,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                   ],
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Profile section
                 Container(
                   padding: const EdgeInsets.all(20),
@@ -152,9 +151,10 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                       ),
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: colors.primary,
+                          color: colors.success,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -169,17 +169,20 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                     ],
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Details section
                 _buildDetailRow(Icons.phone, "Phone", request['phone'], colors),
                 _buildDetailRow(Icons.email, "Email", request['email'], colors),
-                _buildDetailRow(Icons.medical_services, "Service", request['service'], colors),
-                _buildDetailRow(Icons.location_on, "Location", request['location'], colors),
-                _buildDetailRow(Icons.calendar_today, "Accepted Date", request['acceptedDate'], colors),
-                _buildDetailRow(Icons.schedule, "Estimated Time", request['estimatedTime'], colors),
-                _buildDetailRow(Icons.priority_high, "Priority", request['priority'], colors),
+                _buildDetailRow(Icons.medical_services, "Service",
+                    request['service'], colors),
+                _buildDetailRow(
+                    Icons.location_on, "Location", request['location'], colors),
+                _buildDetailRow(Icons.calendar_today, "Completed",
+                    request['completedDate'], colors),
+                _buildDetailRow(
+                    Icons.star, "Rating", "${request['rating']}/5", colors),
               ],
             ),
           ),
@@ -188,7 +191,8 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, AppColors colors) {
+  Widget _buildDetailRow(
+      IconData icon, String label, String value, AppColors colors) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -221,283 +225,6 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
           ),
         ],
       ),
-    );
-  }
-
-  void showCompleteDialog(int index) {
-    final theme = AppTheme();
-    final colors = theme.colors;
-    
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 10,
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: ResponsiveHelper.isMobile(context) ? 350 : 450,
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Success icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colors.success.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle_rounded,
-                    color: colors.success,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // Title
-                Text(
-                  "Mark as Complete",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                    fontFamily: "uber",
-                  ),
-                ),
-                const SizedBox(height: 8),
-                
-                // Description
-                Text(
-                  "Are you sure you want to mark this request as completed?",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: colors.textSecondary,
-                    fontFamily: "uber",
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Action buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          side: BorderSide(color: colors.border),
-                        ),
-                        child: Text(
-                          "Cancel",
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontFamily: "uber",
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            acceptedRequests.removeAt(index);
-                          });
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Request marked as completed",
-                                style: TextStyle(fontFamily: "uber"),
-                              ),
-                              backgroundColor: colors.success,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.success,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "Complete",
-                          style: TextStyle(
-                            color: colors.onPrimary,
-                            fontFamily: "uber",
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void showCancelDialog(int index) {
-    final theme = AppTheme();
-    final colors = theme.colors;
-    TextEditingController cancelReasonController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 10,
-          child: Container(
-            constraints: BoxConstraints(
-              maxWidth: ResponsiveHelper.isMobile(context) ? 350 : 450,
-            ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Warning icon
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colors.error.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.cancel_rounded,
-                    color: colors.error,
-                    size: 32,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // Title
-                Text(
-                  "Cancel Request",
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                    fontFamily: "uber",
-                  ),
-                ),
-                const SizedBox(height: 8),
-                
-                // Description
-                Text(
-                  "Please provide a reason for canceling this accepted request.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: colors.textSecondary,
-                    fontFamily: "uber",
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // Reason input
-                TextField(
-                  controller: cancelReasonController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: "Reason for cancellation",
-                    hintText: "Enter reason for canceling this request...",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.primary, width: 2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Action buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          side: BorderSide(color: colors.border),
-                        ),
-                        child: Text(
-                          "Cancel",
-                          style: TextStyle(
-                            color: colors.textPrimary,
-                            fontFamily: "uber",
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            acceptedRequests.removeAt(index);
-                          });
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Request canceled",
-                                style: TextStyle(fontFamily: "uber"),
-                              ),
-                              backgroundColor: colors.error,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.error,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "Cancel Request",
-                          style: TextStyle(
-                            color: colors.onError,
-                            fontFamily: "uber",
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -535,12 +262,12 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: colors.primary.withOpacity(0.1),
+                            color: colors.success.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
                             Icons.check_circle_rounded,
-                            color: colors.primary,
+                            color: colors.success,
                             size: 28,
                           ),
                         ),
@@ -550,7 +277,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Accepted Requests",
+                                "Completed Requests",
                                 style: TextStyle(
                                   fontSize: isMobile ? 24 : 28,
                                   fontWeight: FontWeight.bold,
@@ -560,7 +287,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                "${acceptedRequests.length} accepted requests",
+                                "${acceptedRequests.length} completed requests",
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: colors.textSecondary,
@@ -605,14 +332,14 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.check_circle_rounded,
+              Icons.inbox_rounded,
               size: 64,
               color: colors.primary,
             ),
           ),
           const SizedBox(height: 24),
           Text(
-            "No Accepted Requests",
+            "No Completed Requests",
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -622,7 +349,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
           ),
           const SizedBox(height: 8),
           Text(
-            "Accepted requests will appear here",
+            "Completed requests will appear here",
             style: TextStyle(
               fontSize: 16,
               color: colors.textSecondary,
@@ -676,7 +403,8 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
     );
   }
 
-  Widget _buildRequestCard(Map<String, dynamic> request, int index, AppColors colors, bool isMobile) {
+  Widget _buildRequestCard(Map<String, dynamic> request, int index,
+      AppColors colors, bool isMobile) {
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -725,7 +453,8 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                               ),
                               child: CircleAvatar(
                                 radius: isMobile ? 25 : 30,
-                                backgroundImage: NetworkImage(request['profilePic']),
+                                backgroundImage:
+                                    NetworkImage(request['profilePic']),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -751,7 +480,7 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: colors.primary,
+                                      color: colors.success,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
@@ -769,9 +498,9 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Service info
                         Row(
                           children: [
@@ -793,9 +522,9 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 8),
-                        
+
                         // Location
                         Row(
                           children: [
@@ -819,30 +548,30 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 8),
-                        
-                        // Priority and time
+
+                        // Rating
                         Row(
                           children: [
                             Icon(
-                              Icons.priority_high,
+                              Icons.star,
                               size: 16,
-                              color: _getPriorityColor(request['priority'], colors),
+                              color: colors.warning,
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              request['priority'],
+                              "${request['rating']}/5",
                               style: TextStyle(
                                 fontSize: 14,
-                                color: _getPriorityColor(request['priority'], colors),
+                                color: colors.textPrimary,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: "uber",
                               ),
                             ),
                             const Spacer(),
                             Text(
-                              request['estimatedTime'],
+                              request['completedDate'],
                               style: TextStyle(
                                 fontSize: 12,
                                 color: colors.textSecondary,
@@ -851,32 +580,17 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
                             ),
                           ],
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
-                        // Action buttons
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _buildActionButton(
-                              icon: Icons.visibility,
-                              label: "View",
-                              color: colors.info,
-                              onPressed: () => showDetailsDialog(request),
-                            ),
-                            _buildActionButton(
-                              icon: Icons.check_circle,
-                              label: "Complete",
-                              color: colors.success,
-                              onPressed: () => showCompleteDialog(index),
-                            ),
-                            _buildActionButton(
-                              icon: Icons.cancel,
-                              label: "Cancel",
-                              color: colors.error,
-                              onPressed: () => showCancelDialog(index),
-                            ),
-                          ],
+
+                        // Action button - only View for completed requests
+                        Center(
+                          child: _buildActionButton(
+                            icon: Icons.visibility,
+                            label: "View Details",
+                            color: colors.info,
+                            onPressed: () => showDetailsDialog(request),
+                          ),
                         ),
                       ],
                     ),
@@ -888,19 +602,6 @@ class _AcceptedRequestsScreenState extends State<AcceptedRequestsScreen>
         );
       },
     );
-  }
-
-  Color _getPriorityColor(String priority, AppColors colors) {
-    switch (priority.toLowerCase()) {
-      case 'high':
-        return colors.error;
-      case 'normal':
-        return colors.warning;
-      case 'low':
-        return colors.success;
-      default:
-        return colors.textSecondary;
-    }
   }
 
   Widget _buildActionButton({

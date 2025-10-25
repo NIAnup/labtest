@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "reels-b197b"
-  }
+    "default": "labtest-e4b35",
+    "staging": "labtest-e4b35"
+  },
+  "targets": {},
+  "etags": {}
 }

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:labtest/main.dart';
 import 'package:labtest/provider/navigatorprodiver.dart';
 import 'package:labtest/screen/active_screen/active_screen.dart';
+import 'package:labtest/screen/complete_screen/complete_screen.dart';
 import 'package:labtest/screen/dashboard/Topappbar.dart';
 import 'package:labtest/screen/dashboard/dashboardContent.dart';
+import 'package:labtest/screen/pending_screen/pending_screen.dart';
+import 'package:labtest/store/app_theme.dart';
+import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:labtest/widget/Myscaffold.dart';
 import 'package:labtest/widget/Navitem.dart';
 import 'package:labtest/widget/customTextfield.dart';
 import 'package:labtest/widget/custombutton.dart';
-import 'package:labtest/widget/starCards.dart';
 import 'package:provider/provider.dart';
 
 class BloodLabHomePage extends StatelessWidget {
@@ -18,184 +20,281 @@ class BloodLabHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<NavigatorProvider>(context);
-    return Myscaffold(
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          bool isWideScreen = constraints.maxWidth > 900;
 
-          if (isWideScreen) {
-            return Row(
-              children: [
-                SizedBox(
-                  width: 250,
-                  child: Material(
-                    color: Colors.blue.shade500,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 50),
-                        const Text(
-                          'Blood Lab',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'uber',
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Divider(),
-                        NavItem(
-                          icon: Iconsax.home_1,
-                          label: 'Dashboard',
-                          onTap: () {
-                            provider.currentIndex = 0;
-                          },
-                        ),
-                        NavItem(
-                          icon: Iconsax.user_search,
-                          label: 'Pending Requests',
-                          onTap: () {
-                            provider.currentIndex = 1;
-                          },
-                        ),
-                        NavItem(
-                          icon: Iconsax.verify,
-                          label: 'Active Requests',
-                          onTap: () {},
-                        ),
-                        NavItem(
-                          icon: Iconsax.tick_circle,
-                          label: 'Completed Tests',
-                          onTap: () {},
-                        ),
-                        NavItem(
-                          icon: Iconsax.user_tick,
-                          label: 'Flavo History',
-                          onTap: () {},
-                        ),
-                        NavItem(
-                          icon: Icons.settings,
-                          label: 'Settings',
-                          onTap: () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Main Content Area
-                Flexible(
-                  flex: 1,
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const TopBar(),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Custombutton(
-                              text: "Add New Request",
-                              onTap: () => _showAddRequestDialog(context)),
-                        ), // Custom widget for top bar
+    return Consumer<AppTheme>(
+      builder: (context, theme, child) {
+        return Myscaffold(
+          backgroundColor: theme.colors.background,
+          body: ResponsiveLayout(
+            mobile: _buildMobileLayout(context, provider, theme),
+            tablet: _buildTabletLayout(context, provider, theme),
+            desktop: _buildDesktopLayout(context, provider, theme),
+          ),
+        );
+      },
+    );
+  }
 
-                        if (provider.currentIndex == 0)
-                          const DashboardContent()
-                        else if (provider.currentIndex == 1)
-                          Flexible(flex: 1, child: AcceptedRequestsScreen()),
-                      ]),
-                ),
-              ],
-            );
-          } else {
-            // Mobile/Tablet: Use a drawer for navigation
-            return Scaffold(
-              appBar: AppBar(
-                  title: const Text(
+  Widget _buildMobileLayout(
+      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    return Scaffold(
+      appBar: AppBar(
+        title: ResponsiveText(
+          'Blood Lab',
+          style: TextStyle(
+            fontSize: ResponsiveHelper.getResponsiveFontSize(
+              context,
+              mobile: 20,
+              tablet: 22,
+              desktop: 24,
+            ),
+            fontWeight: FontWeight.bold,
+            color: theme.colors.textPrimary,
+          ),
+        ),
+        backgroundColor: theme.colors.surface,
+        foregroundColor: theme.colors.textPrimary,
+        actions: [
+          IconButton(
+            icon: Icon(
+              theme.isLightTime ? Icons.dark_mode : Icons.light_mode,
+              color: theme.colors.textPrimary,
+            ),
+            onPressed: () => theme.toggleTheme(),
+          ),
+        ],
+      ),
+      drawer: _buildDrawer(context, provider, theme),
+      body: _buildBody(context, provider, theme),
+    );
+  }
+
+  Widget _buildTabletLayout(
+      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    return Scaffold(
+      appBar: AppBar(
+        title: ResponsiveText(
+          'Blood Lab',
+          style: TextStyle(
+            fontSize: ResponsiveHelper.getResponsiveFontSize(
+              context,
+              mobile: 20,
+              tablet: 22,
+              desktop: 24,
+            ),
+            fontWeight: FontWeight.bold,
+            color: theme.colors.textPrimary,
+          ),
+        ),
+        backgroundColor: theme.colors.surface,
+        foregroundColor: theme.colors.textPrimary,
+        actions: [
+          IconButton(
+            icon: Icon(
+              theme.isLightTime ? Icons.dark_mode : Icons.light_mode,
+              color: theme.colors.textPrimary,
+            ),
+            onPressed: () => theme.toggleTheme(),
+          ),
+        ],
+      ),
+      drawer: _buildDrawer(context, provider, theme),
+      body: _buildBody(context, provider, theme),
+    );
+  }
+
+  Widget _buildDesktopLayout(
+      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    return Row(
+      children: [
+        // Sidebar
+        Container(
+          width: ResponsiveHelper.getResponsiveValue(
+            context,
+            mobile: 200,
+            tablet: 250,
+            desktop: 300,
+          ),
+          decoration: BoxDecoration(
+            color: theme.colors.primary,
+            boxShadow: [
+              BoxShadow(
+                color: theme.colors.shadow,
+                blurRadius: 4,
+                offset: const Offset(2, 0),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              SizedBox(
+                  height: ResponsiveHelper.getResponsiveValue(
+                context,
+                mobile: 20,
+                tablet: 30,
+                desktop: 50,
+              )),
+              ResponsiveText(
                 'Blood Lab',
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'uber',
-                ),
-              )),
-              drawer: Drawer(
-                backgroundColor: Colors.blue.shade500,
-                child: ListView(
-                  children: [
-                    DrawerHeader(
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade500,
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Blood Lab',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontFamily: 'uber',
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                    NavItem(
-                      icon: Iconsax.home_1,
-                      label: 'Dashboard',
-                      onTap: () {
-                        provider.currentIndex = 0;
-                      },
-                    ),
-                    NavItem(
-                      icon: Iconsax.user_search,
-                      label: 'Pending Requests',
-                      onTap: () {
-                        provider.currentIndex = 1;
-                      },
-                    ),
-                    NavItem(
-                      icon: Iconsax.verify,
-                      label: 'Active Requests',
-                      onTap: () {},
-                    ),
-                    NavItem(
-                      icon: Iconsax.tick_circle,
-                      label: 'Completed Tests',
-                      onTap: () {},
-                    ),
-                    NavItem(
-                      icon: Iconsax.user_tick,
-                      label: 'Flavo History',
-                      onTap: () {},
-                    ),
-                    NavItem(
-                      icon: Icons.settings,
-                      label: 'Settings',
-                      onTap: () {},
-                    ),
-                  ],
-                ),
-              ),
-              body: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const TopBar(),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Custombutton(
-                        text: "Add New Request",
-                        onTap: () => _showAddRequestDialog(context)),
+                  fontSize: ResponsiveHelper.getResponsiveFontSize(
+                    context,
+                    mobile: 20,
+                    tablet: 22,
+                    desktop: 24,
                   ),
-
-                  if (provider.currentIndex == 0)
-                    const DashboardContent()
-                  else if (provider.currentIndex == 1)
-                    Flexible(child: AcceptedRequestsScreen()),
-                  // NotificationListener(child: ))
-                ],
+                  fontWeight: FontWeight.bold,
+                  color: theme.colors.onPrimary,
+                ),
+                textAlign: TextAlign.center,
               ),
-            );
-          }
-        },
+              SizedBox(
+                  height: ResponsiveHelper.getResponsiveValue(
+                context,
+                mobile: 20,
+                tablet: 30,
+                desktop: 40,
+              )),
+              const Divider(color: Colors.white54),
+              Expanded(
+                child: Column(
+                  children: _buildNavigationItems(context, provider, theme),
+                ),
+              ),
+              // Theme toggle at bottom
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: IconButton(
+                  icon: Icon(
+                    theme.isLightTime ? Icons.dark_mode : Icons.light_mode,
+                    color: theme.colors.onPrimary,
+                    size: 28,
+                  ),
+                  onPressed: () => theme.toggleTheme(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Main Content Area
+        Expanded(
+          child: _buildBody(context, provider, theme),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDrawer(
+      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    return Drawer(
+      backgroundColor: theme.colors.primary,
+      child: ListView(
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(
+              color: theme.colors.primary,
+            ),
+            child: ResponsiveText(
+              'Blood Lab',
+              style: TextStyle(
+                fontSize: ResponsiveHelper.getResponsiveFontSize(
+                  context,
+                  mobile: 20,
+                  tablet: 22,
+                  desktop: 24,
+                ),
+                fontWeight: FontWeight.bold,
+                color: theme.colors.onPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          ..._buildNavigationItems(context, provider, theme),
+        ],
       ),
     );
+  }
+
+  List<Widget> _buildNavigationItems(
+      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    return [
+      NavItem(
+        icon: Iconsax.home_1,
+        label: 'Dashboard',
+        isSelected: provider.currentIndex == 0,
+        onTap: () => provider.currentIndex = 0,
+      ),
+      NavItem(
+        icon: Iconsax.user_search,
+        label: 'Pending Requests',
+        isSelected: provider.currentIndex == 1,
+        onTap: () => provider.currentIndex = 1,
+      ),
+      NavItem(
+        icon: Iconsax.verify,
+        label: 'Active Requests',
+        isSelected: provider.currentIndex == 2,
+        onTap: () => provider.currentIndex = 2,
+      ),
+      NavItem(
+        icon: Iconsax.tick_circle,
+        label: 'Completed Tests',
+        isSelected: provider.currentIndex == 3,
+        onTap: () => provider.currentIndex = 3,
+      ),
+      NavItem(
+        icon: Iconsax.user_tick,
+        label: 'Flavo History',
+        isSelected: false,
+        onTap: () {},
+      ),
+      NavItem(
+        icon: Icons.settings,
+        label: 'Settings',
+        isSelected: false,
+        onTap: () {},
+      ),
+    ];
+  }
+
+  Widget _buildBody(
+      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        const TopBar(),
+        Padding(
+          padding: ResponsiveHelper.getResponsivePadding(
+            context,
+            mobile: const EdgeInsets.all(8.0),
+            tablet: const EdgeInsets.all(12.0),
+            desktop: const EdgeInsets.all(16.0),
+          ),
+          child: Custombutton(
+            text: "Add New Request",
+            onTap: () => _showAddRequestDialog(context),
+          ),
+        ),
+        Expanded(
+          child: _buildCurrentScreen(provider),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCurrentScreen(NavigatorProvider provider) {
+    switch (provider.currentIndex) {
+      case 0:
+        return DashboardContent();
+      case 1:
+        return PendingScreen();
+      case 2:
+        return AcceptedRequestsScreen();
+      case 3:
+        return CompleteScreen();
+      default:
+        return DashboardContent();
+    }
   }
 
   void _showAddRequestDialog(BuildContext context) {
@@ -208,112 +307,156 @@ class BloodLabHomePage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text("Add Collection Request",
-                  style: TextStyle(
-                    fontFamily: 'uber',
-                    fontSize: 15,
-                  )),
-              InkWell(
-                onTap: () => Navigator.pop(context),
-                child: const Icon(
-                  Iconsax.close_square,
-                  color: Colors.black,
-                  size: 30,
-                ),
-              )
-            ],
-          ),
-          content: Form(
-            key: _formKey,
-            child: SizedBox(
-              width: 300,
-              child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Customtextfield(
-                  controller: patientNameController,
-                  // decoration: const InputDecoration(labelText: "Patient Name"),
-                  hintText: "Patient Name",
-                  validator: (value) =>
-                      value!.isEmpty ? 'Enter patient name' : null,
-                ),
-                const SizedBox(height: 16),
-                Customtextfield(
-                  controller: testTypeController,
-                  // decoration: const InputDecoration(labelText: "Test Type"),
-                  hintText: "Test Type",
-                  validator: (value) =>
-                      value!.isEmpty ? 'Enter test type' : null,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 2.0,
+        return Consumer<AppTheme>(
+          builder: (context, theme, child) {
+            return AlertDialog(
+              backgroundColor: theme.colors.surface,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ResponsiveText(
+                    "Add Collection Request",
+                    style: TextStyle(
+                      fontFamily: 'uber',
+                      fontSize: ResponsiveHelper.getResponsiveFontSize(
+                        context,
+                        mobile: 14,
+                        tablet: 16,
+                        desktop: 18,
                       ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 2.0,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade300,
-                        width: 2.0,
-                      ),
+                      color: theme.colors.textPrimary,
                     ),
                   ),
-
-                  // decoration: const InputDecoration(labelText: "Urgency"),
-
-                  value: urgency,
-                  hint: const Text(
-                    "Urgency",
-                    style: TextStyle(color: Colors.grey, fontFamily: 'uber'),
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(
+                      Iconsax.close_square,
+                      color: theme.colors.textPrimary,
+                      size: ResponsiveHelper.getResponsiveValue(
+                        context,
+                        mobile: 24,
+                        tablet: 28,
+                        desktop: 30,
+                      ),
+                    ),
+                  )
+                ],
+              ),
+              content: Form(
+                key: _formKey,
+                child: SizedBox(
+                  width: ResponsiveHelper.getResponsiveValue(
+                    context,
+                    mobile: 280,
+                    tablet: 320,
+                    desktop: 360,
                   ),
-                  items: ['Normal', 'Urgent'].map((String value) {
-                    return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(
-                          value,
-                          style: const TextStyle(
-                              fontFamily: 'uber', fontWeight: FontWeight.bold),
-                        ));
-                  }).toList(),
-                  onChanged: (newValue) {
-                    urgency = newValue!;
-                  },
-
-                  focusColor: Colors.white,
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Customtextfield(
+                      controller: patientNameController,
+                      hintText: "Patient Name",
+                      validator: (value) =>
+                          value!.isEmpty ? 'Enter patient name' : null,
+                    ),
+                    SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: 12,
+                      tablet: 16,
+                      desktop: 20,
+                    )),
+                    Customtextfield(
+                      controller: testTypeController,
+                      hintText: "Test Type",
+                      validator: (value) =>
+                          value!.isEmpty ? 'Enter test type' : null,
+                    ),
+                    SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: 12,
+                      tablet: 16,
+                      desktop: 20,
+                    )),
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: theme.colors.border,
+                            width: 2.0,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: theme.colors.primary,
+                            width: 2.0,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: theme.colors.border,
+                            width: 2.0,
+                          ),
+                        ),
+                      ),
+                      value: urgency,
+                      hint: ResponsiveText(
+                        "Urgency",
+                        style: TextStyle(
+                          color: theme.colors.textSecondary,
+                          fontFamily: 'uber',
+                        ),
+                      ),
+                      items: ['Normal', 'Urgent'].map((String value) {
+                        return DropdownMenuItem<String>(
+                            value: value,
+                            child: ResponsiveText(
+                              value,
+                              style: TextStyle(
+                                fontFamily: 'uber',
+                                fontWeight: FontWeight.bold,
+                                color: theme.colors.textPrimary,
+                              ),
+                            ));
+                      }).toList(),
+                      onChanged: (newValue) {
+                        urgency = newValue!;
+                      },
+                    ),
+                    SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: 12,
+                      tablet: 16,
+                      desktop: 20,
+                    )),
+                    Customtextfield(
+                      controller: locationController,
+                      hintText: "Location",
+                      validator: (value) =>
+                          value!.isEmpty ? 'Enter location' : null,
+                    ),
+                    SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: 12,
+                      tablet: 16,
+                      desktop: 20,
+                    )),
+                    Custombutton(
+                      onTap: () {
+                        if (_formKey.currentState!.validate()) {
+                          // Handle form submission (e.g., save to database)
+                          Navigator.pop(context);
+                        }
+                      },
+                      text: 'Add Request',
+                    ),
+                  ]),
                 ),
-                const SizedBox(height: 16),
-                Customtextfield(
-                  controller: locationController,
-                  // decoration: const InputDecoration(labelText: "Location"),
-                  hintText: "Location",
-                  validator: (value) =>
-                      value!.isEmpty ? 'Enter location' : null,
-                ),
-                const SizedBox(height: 16),
-                Custombutton(
-                  onTap: () {
-                    if (_formKey.currentState!.validate()) {
-                      // Handle form submission (e.g., save to database)
-                      Navigator.pop(context);
-                    }
-                  },
-                  text: 'Add Request',
-                ),
-              ]),
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
