@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:labtest/screen/Auth/login/LoginPage.dart';
 import 'package:labtest/screen/dashboard/dashboard.dart';
+import 'package:labtest/screen/Auth/registration/lab_registration_form.dart';
 import 'package:labtest/widget/customTextfield.dart';
 import 'package:labtest/widget/custombutton.dart';
 
@@ -91,19 +92,12 @@ class _RegistrationFormState extends State<RegistrationForm> {
           // Sign Up Button
           Custombutton(
             onTap: () {
-              // if (_formKey.currentState!.validate()) {
-              //   _formKey.currentState!.save();
-              //   // TODO: Perform registration logic (API call, etc.)
-              //   ScaffoldMessenger.of(context).showSnackBar(
-              //     SnackBar(content: Text('Registering...')),
-              //   );
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => BloodLabHomePage()),
+                MaterialPageRoute(builder: (context) => LabRegistrationForm()),
               );
-              // }
             },
-            text: 'Sign Up',
+            text: 'Lab Registration',
           ),
           const SizedBox(height: 24),
           TextButton(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:labtest/provider/navigatorprodiver.dart';
 import 'package:labtest/screen/Auth/registration/Registrationpage.dart';
+import 'package:labtest/screen/Auth/verification_pending_screen.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -32,10 +33,22 @@ class MyApp extends StatelessWidget {
     return Consumer<AppTheme>(
       builder: (context, theme, child) {
         return MaterialApp(
-          title: 'Blood Lab Management',
+          title: 'Blood Lab Management System',
           debugShowCheckedModeBanner: false,
           theme: theme.themeData,
           home: RegistrationPage(),
+          routes: {
+            '/verification-pending': (context) => VerificationPendingScreen(),
+            '/login': (context) => RegistrationPage(),
+          },
+          builder: (context, child) {
+            return MediaQuery(
+              data: MediaQuery.of(context).copyWith(
+                textScaleFactor: 1.0, // Prevent text scaling on web
+              ),
+              child: child!,
+            );
+          },
         );
       },
     );

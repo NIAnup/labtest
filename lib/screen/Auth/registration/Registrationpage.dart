@@ -4,53 +4,165 @@ import 'package:labtest/screen/Auth/registration/registrationform.dart';
 import 'package:labtest/widget/Myscaffold.dart';
 import 'package:labtest/widget/customTextfield.dart';
 import 'package:labtest/widget/custombutton.dart';
+import 'package:labtest/responsive/responsive_layout.dart';
+
+import '../../../store/app_theme.dart';
 
 class RegistrationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Myscaffold(
       body: Center(
-        // Center the content horizontally & vertically in the screen
         child: Container(
           decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: Colors.grey.shade400,
-              )),
-          // Constrain the max width (adjust to your preference)
-          constraints: BoxConstraints(maxWidth: 1000, maxHeight: 800),
+            borderRadius:
+                BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
+              context,
+              mobile: 12,
+              tablet: 16,
+              desktop: 20,
+            )),
+            border: Border.all(
+              color: Colors.grey.shade300,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: Offset(0, 10),
+              ),
+            ],
+          ),
+          constraints: BoxConstraints(
+            maxWidth: ResponsiveHelper.getResponsiveValue(
+              context,
+              mobile: double.infinity,
+              tablet: 900,
+              desktop: 1200,
+            ),
+            maxHeight: ResponsiveHelper.getResponsiveValue(
+              context,
+              mobile: double.infinity,
+              tablet: 800,
+              desktop: 900,
+            ),
+          ),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // Decide if it’s a wide layout (web/desktop) or narrow layout (mobile/tablet)
               bool isWide = constraints.maxWidth > 800;
-              // You can tweak this breakpoint
 
               return Row(
                 children: [
-                  // Branding panel (optional)
+                  // Branding panel
                   if (isWide)
                     Expanded(
                       flex: 1,
                       child: Container(
-                        color: Colors.blue.shade500,
-                        child: const Center(
-                          child: Text(
-                            'Blood Lab',
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'uber',
-                              color: Colors.white,
-                            ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.blue.shade600,
+                              Colors.blue.shade800,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.only(
+                            topLeft: Radius.circular(
+                                ResponsiveHelper.getResponsiveValue(
+                              context,
+                              mobile: 12,
+                              tablet: 16,
+                              desktop: 20,
+                            )),
+                            bottomLeft: Radius.circular(
+                                ResponsiveHelper.getResponsiveValue(
+                              context,
+                              mobile: 12,
+                              tablet: 16,
+                              desktop: 20,
+                            )),
+                          ),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.science,
+                                size: ResponsiveHelper.getResponsiveValue(
+                                  context,
+                                  mobile: 60,
+                                  tablet: 80,
+                                  desktop: 100,
+                                ),
+                                color: Colors.white,
+                              ),
+                              SizedBox(height: 20),
+                              ResponsiveText(
+                                'Blood Lab',
+                                style: TextStyle(
+                                  fontSize:
+                                      ResponsiveHelper.getResponsiveFontSize(
+                                    context,
+                                    mobile: 32,
+                                    tablet: 40,
+                                    desktop: 48,
+                                  ),
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'uber',
+                                  color: Colors.white,
+                                ),
+                              ),
+                              SizedBox(height: 16),
+                              ResponsiveText(
+                                'Management System',
+                                style: TextStyle(
+                                  fontSize:
+                                      ResponsiveHelper.getResponsiveFontSize(
+                                    context,
+                                    mobile: 16,
+                                    tablet: 18,
+                                    desktop: 20,
+                                  ),
+                                  fontFamily: 'uber',
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              SizedBox(height: 40),
+                              ResponsiveText(
+                                'Professional Lab Registration',
+                                style: TextStyle(
+                                  fontSize:
+                                      ResponsiveHelper.getResponsiveFontSize(
+                                    context,
+                                    mobile: 14,
+                                    tablet: 16,
+                                    desktop: 18,
+                                  ),
+                                  fontFamily: 'uber',
+                                  color: Colors.white60,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
+
                   // Form area
                   Expanded(
-                    flex: 1,
+                    flex: isWide ? 1 : 2,
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.all(32.0),
+                      padding:
+                          EdgeInsets.all(ResponsiveHelper.getResponsiveValue(
+                        context,
+                        mobile: 24,
+                        tablet: 32,
+                        desktop: 40,
+                      )),
                       child: RegistrationForm(),
                     ),
                   ),
