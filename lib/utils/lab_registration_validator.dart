@@ -8,7 +8,6 @@ class LabRegistrationValidator {
   static final RegExp _phonePattern = RegExp(r'^[+]?[0-9]{10,15}$');
   static final RegExp _emailPattern =
       RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-  static final RegExp _licensePattern = RegExp(r'^[A-Z]{2}/[A-Z]{2}/\d{4}$');
 
   // Basic field validations
   static String? validateLabName(String? value) {

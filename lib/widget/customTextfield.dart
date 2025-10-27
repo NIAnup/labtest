@@ -4,7 +4,7 @@ import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:provider/provider.dart';
 
 class Customtextfield extends StatelessWidget {
-  Customtextfield({
+  const Customtextfield({
     super.key,
     this.validator,
     this.onSaved,
@@ -21,15 +21,15 @@ class Customtextfield extends StatelessWidget {
 
   final String? Function(String?)? validator;
   final void Function(String?)? onSaved;
-  TextEditingController? controller;
-  String? hintText;
-  String? labelText;
-  Widget? prefixIcon;
-  Widget? suffixIcon;
-  Brightness? keyboardAppearance;
-  TextInputType? keyboardType;
-  bool obscureText;
-  int maxLines;
+  final TextEditingController? controller;
+  final String? hintText;
+  final String? labelText;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+  final Brightness? keyboardAppearance;
+  final TextInputType? keyboardType;
+  final bool obscureText;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +87,8 @@ class Customtextfield extends StatelessWidget {
               ),
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
+              borderRadius:
+                  BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
                 context,
                 mobile: 6,
                 tablet: 8,
@@ -99,7 +100,8 @@ class Customtextfield extends StatelessWidget {
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
+              borderRadius:
+                  BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
                 context,
                 mobile: 6,
                 tablet: 8,
@@ -111,7 +113,8 @@ class Customtextfield extends StatelessWidget {
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
+              borderRadius:
+                  BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
                 context,
                 mobile: 6,
                 tablet: 8,
@@ -123,7 +126,8 @@ class Customtextfield extends StatelessWidget {
               ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
+              borderRadius:
+                  BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
                 context,
                 mobile: 6,
                 tablet: 8,
@@ -135,7 +139,8 @@ class Customtextfield extends StatelessWidget {
               ),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
+              borderRadius:
+                  BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
                 context,
                 mobile: 6,
                 tablet: 8,

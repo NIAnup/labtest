@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/widget/custombutton.dart';
+import 'package:labtest/utils/route_names.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 
 class VerificationPendingScreen extends StatelessWidget {
   @override
@@ -269,11 +271,7 @@ class VerificationPendingScreen extends StatelessWidget {
                       TextButton(
                         onPressed: () {
                           // Logout and return to login
-                          Navigator.pushNamedAndRemoveUntil(
-                            context,
-                            '/login',
-                            (route) => false,
-                          );
+                          context.go(RouteNames.login);
                         },
                         child: ResponsiveText(
                           'Logout',

@@ -1,130 +1,85 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:labtest/utils/route_names.dart';
 import 'package:labtest/widget/customTextfield.dart';
 import 'package:labtest/widget/custombutton.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:labtest/store/app_theme.dart';
+import 'package:labtest/provider/lab_registration_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:file_picker/file_picker.dart';
-import 'dart:io';
 
-class LabRegistrationForm extends StatefulWidget {
-  @override
-  _LabRegistrationFormState createState() => _LabRegistrationFormState();
-}
-
-class _LabRegistrationFormState extends State<LabRegistrationForm> {
-  final _formKey = GlobalKey<FormState>();
-  final PageController _pageController = PageController();
-  int _currentStep = 0;
-  final int _totalSteps = 4;
-
-  // Controllers for basic information
-  final TextEditingController _labNameController = TextEditingController();
-  final TextEditingController _ownerNameController = TextEditingController();
-  final TextEditingController _contactNumberController =
-      TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _labAddressController = TextEditingController();
-  final TextEditingController _cityStatePincodeController =
-      TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController =
-      TextEditingController();
-
-  // Controllers for business information
-  final TextEditingController _gstNumberController = TextEditingController();
-  final TextEditingController _panNumberController = TextEditingController();
-
-  // Controllers for clinical information
-  final TextEditingController _licenseNumberController =
-      TextEditingController();
-  final TextEditingController _issuedByController = TextEditingController();
-
-  // Dropdown values
-  String? _selectedIdentityProof;
-  String? _selectedBusinessType;
-  String? _isGstRegistered;
-
-  // Date
-  DateTime? _licenseExpiryDate;
-
-  // File uploads
-  File? _businessRegistrationFile;
-  File? _gstCertificateFile;
-  File? _clinicalLicenseFile;
-
-  // Validation patterns
-  final RegExp _gstPattern =
-      RegExp(r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$');
-  final RegExp _phonePattern = RegExp(r'^[+]?[0-9]{10,15}$');
-
+class LabRegistrationForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppTheme>(
-      builder: (context, theme, child) {
-        return Scaffold(
-          backgroundColor: theme.colors.background,
-          body: SafeArea(
-            child: Center(
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: ResponsiveHelper.getResponsiveValue(
-                    context,
-                    mobile: double.infinity,
-                    tablet: 800,
-                    desktop: 1000,
+    return ChangeNotifierProvider(
+      create: (context) => LabRegistrationProvider(),
+      child: Consumer2<AppTheme, LabRegistrationProvider>(
+        builder: (context, theme, provider, child) {
+          return Scaffold(
+            backgroundColor: theme.colors.background,
+            body: SafeArea(
+              child: Center(
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: double.infinity,
+                      tablet: 800,
+                      desktop: 1000,
+                    ),
                   ),
-                ),
-                child: Column(
-                  children: [
-                    // Header
-                    _buildHeader(theme),
+                  child: Column(
+                    children: [
+                      // Header
+                      _buildHeader(context, theme, provider),
 
-                    // Progress indicator
-                    _buildProgressIndicator(theme),
+                      // Progress indicator
+                      _buildProgressIndicator(context, theme, provider),
 
-                    // Form content
-                    Expanded(
-                      child: Container(
-                        margin: EdgeInsets.symmetric(
-                          horizontal: ResponsiveHelper.getResponsiveValue(
-                            context,
-                            mobile: 16,
-                            tablet: 24,
-                            desktop: 32,
+                      // Form content
+                      Expanded(
+                        child: Container(
+                          margin: EdgeInsets.symmetric(
+                            horizontal: ResponsiveHelper.getResponsiveValue(
+                              context,
+                              mobile: 16,
+                              tablet: 24,
+                              desktop: 32,
+                            ),
+                          ),
+                          child: PageView(
+                            controller: provider.pageController,
+                            onPageChanged: (index) {
+                              provider.currentStep = index;
+                            },
+                            children: [
+                              _buildBasicInformationStep(
+                                  context, theme, provider),
+                              _buildIdentityProofStep(context, theme, provider),
+                              _buildBusinessInformationStep(
+                                  context, theme, provider),
+                              _buildClinicalInformationStep(
+                                  context, theme, provider),
+                            ],
                           ),
                         ),
-                        child: PageView(
-                          controller: _pageController,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentStep = index;
-                            });
-                          },
-                          children: [
-                            _buildBasicInformationStep(theme),
-                            _buildIdentityProofStep(theme),
-                            _buildBusinessInformationStep(theme),
-                            _buildClinicalInformationStep(theme),
-                          ],
-                        ),
                       ),
-                    ),
 
-                    // Navigation buttons
-                    _buildNavigationButtons(theme),
-                  ],
+                      // Navigation buttons
+                      _buildNavigationButtons(context, theme, provider),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildHeader(AppTheme theme) {
+  Widget _buildHeader(
+      BuildContext context, AppTheme theme, LabRegistrationProvider provider) {
     return Container(
       padding: EdgeInsets.all(ResponsiveHelper.getResponsiveValue(
         context,
@@ -136,7 +91,13 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
         children: [
           // Back button
           IconButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(RouteNames.login);
+              }
+            },
             icon: Icon(
               Icons.arrow_back,
               color: theme.colors.textPrimary,
@@ -209,7 +170,8 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
     );
   }
 
-  Widget _buildProgressIndicator(AppTheme theme) {
+  Widget _buildProgressIndicator(
+      BuildContext context, AppTheme theme, LabRegistrationProvider provider) {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveHelper.getResponsiveValue(
@@ -229,7 +191,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
         children: [
           // Step labels
           Row(
-            children: List.generate(_totalSteps, (index) {
+            children: List.generate(provider.totalSteps, (index) {
               return Expanded(
                 child: Column(
                   children: [
@@ -247,7 +209,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
                         desktop: 48,
                       ),
                       decoration: BoxDecoration(
-                        color: index <= _currentStep
+                        color: index <= provider.currentStep
                             ? theme.colors.primary
                             : theme.colors.border,
                         shape: BoxShape.circle,
@@ -263,7 +225,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
                               desktop: 18,
                             ),
                             fontWeight: FontWeight.bold,
-                            color: index <= _currentStep
+                            color: index <= provider.currentStep
                                 ? theme.colors.onPrimary
                                 : theme.colors.textSecondary,
                             fontFamily: 'uber',
@@ -273,7 +235,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
                     ),
                     SizedBox(height: 8),
                     ResponsiveText(
-                      _getStepTitle(index),
+                      provider.getStepTitle(index),
                       style: TextStyle(
                         fontSize: ResponsiveHelper.getResponsiveFontSize(
                           context,
@@ -314,7 +276,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
             ),
             child: FractionallySizedBox(
               alignment: Alignment.centerLeft,
-              widthFactor: (_currentStep + 1) / _totalSteps,
+              widthFactor: (provider.currentStep + 1) / provider.totalSteps,
               child: Container(
                 decoration: BoxDecoration(
                   color: theme.colors.primary,
@@ -328,22 +290,8 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
     );
   }
 
-  String _getStepTitle(int step) {
-    switch (step) {
-      case 0:
-        return 'Basic Info';
-      case 1:
-        return 'Identity';
-      case 2:
-        return 'Business';
-      case 3:
-        return 'Clinical';
-      default:
-        return '';
-    }
-  }
-
-  Widget _buildBasicInformationStep(AppTheme theme) {
+  Widget _buildBasicInformationStep(
+      BuildContext context, AppTheme theme, LabRegistrationProvider provider) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(ResponsiveHelper.getResponsiveValue(
         context,
@@ -351,247 +299,237 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
         tablet: 24,
         desktop: 32,
       )),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ResponsiveText(
-              'Basic Information',
-              style: TextStyle(
-                fontSize: ResponsiveHelper.getResponsiveFontSize(
-                  context,
-                  mobile: 24,
-                  tablet: 28,
-                  desktop: 32,
-                ),
-                fontWeight: FontWeight.bold,
-                color: theme.colors.textPrimary,
-                fontFamily: 'uber',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ResponsiveText(
+            'Basic Information',
+            style: TextStyle(
+              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                context,
+                mobile: 24,
+                tablet: 28,
+                desktop: 32,
               ),
+              fontWeight: FontWeight.bold,
+              color: theme.colors.textPrimary,
+              fontFamily: 'uber',
             ),
-            SizedBox(
-                height: ResponsiveHelper.getResponsiveValue(
-              context,
-              mobile: 20,
-              tablet: 24,
-              desktop: 28,
-            )),
+          ),
+          SizedBox(
+              height: ResponsiveHelper.getResponsiveValue(
+            context,
+            mobile: 20,
+            tablet: 24,
+            desktop: 28,
+          )),
 
-            // Responsive grid layout
-            LayoutBuilder(
-              builder: (context, constraints) {
-                bool isWideScreen = constraints.maxWidth > 600;
+          // Responsive grid layout
+          LayoutBuilder(
+            builder: (context, constraints) {
+              bool isWideScreen = constraints.maxWidth > 600;
 
-                if (isWideScreen) {
-                  // Desktop/Tablet layout - 2 columns
-                  return Column(
-                    children: [
-                      // First row
-                      Row(
+              if (isWideScreen) {
+                // Desktop/Tablet layout - 2 columns
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Customtextfield(
-                                  controller: _labNameController,
-                                  hintText: 'Lab Name',
-                                  validator: (value) => value!.isEmpty
-                                      ? 'Please enter lab name'
-                                      : null,
-                                ),
-                                SizedBox(height: 16),
-                                Customtextfield(
-                                  controller: _ownerNameController,
-                                  hintText: 'Owner / Authorized Person Name',
-                                  validator: (value) => value!.isEmpty
-                                      ? 'Please enter owner name'
-                                      : null,
-                                ),
-                                SizedBox(height: 16),
-                                Customtextfield(
-                                  controller: _contactNumberController,
-                                  hintText: 'Contact Number',
-                                  keyboardType: TextInputType.phone,
-                                  validator: (value) {
-                                    if (value!.isEmpty)
-                                      return 'Please enter contact number';
-                                    if (!_phonePattern.hasMatch(value))
-                                      return 'Please enter valid phone number';
-                                    return null;
-                                  },
-                                ),
-                                SizedBox(height: 16),
-                                Customtextfield(
-                                  controller: _emailController,
-                                  hintText: 'Email',
-                                  keyboardType: TextInputType.emailAddress,
-                                  validator: (value) {
-                                    if (value!.isEmpty)
-                                      return 'Please enter email';
-                                    if (!RegExp(
-                                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                                        .hasMatch(value)) {
-                                      return 'Please enter valid email';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                              ],
-                            ),
+                          Customtextfield(
+                            controller: provider.labNameController,
+                            hintText: 'Lab Name',
+                            validator: (value) =>
+                                value!.isEmpty ? 'Please enter lab name' : null,
                           ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Customtextfield(
-                                  controller: _labAddressController,
-                                  hintText: 'Lab Address',
-                                  maxLines: 3,
-                                  validator: (value) => value!.isEmpty
-                                      ? 'Please enter lab address'
-                                      : null,
-                                ),
-                                SizedBox(height: 16),
-                                Customtextfield(
-                                  controller: _cityStatePincodeController,
-                                  hintText: 'City / State / Pincode',
-                                  validator: (value) => value!.isEmpty
-                                      ? 'Please enter city/state/pincode'
-                                      : null,
-                                ),
-                                SizedBox(height: 16),
-                                Customtextfield(
-                                  controller: _passwordController,
-                                  hintText: 'Password',
-                                  obscureText: true,
-                                  validator: (value) {
-                                    if (value!.isEmpty)
-                                      return 'Please enter password';
-                                    if (value.length < 8)
-                                      return 'Password must be at least 8 characters';
-                                    return null;
-                                  },
-                                ),
-                                SizedBox(height: 16),
-                                Customtextfield(
-                                  controller: _confirmPasswordController,
-                                  hintText: 'Confirm Password',
-                                  obscureText: true,
-                                  validator: (value) {
-                                    if (value!.isEmpty)
-                                      return 'Please confirm password';
-                                    if (value != _passwordController.text)
-                                      return 'Passwords do not match';
-                                    return null;
-                                  },
-                                ),
-                              ],
-                            ),
+                          SizedBox(height: 16),
+                          Customtextfield(
+                            controller: provider.ownerNameController,
+                            hintText: 'Owner / Authorized Person Name',
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter owner name'
+                                : null,
+                          ),
+                          SizedBox(height: 16),
+                          Customtextfield(
+                            controller: provider.contactNumberController,
+                            hintText: 'Contact Number',
+                            keyboardType: TextInputType.phone,
+                            validator: (value) {
+                              if (value!.isEmpty)
+                                return 'Please enter contact number';
+                              if (!provider.phonePattern.hasMatch(value))
+                                return 'Please enter valid phone number';
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 16),
+                          Customtextfield(
+                            controller: provider.emailController,
+                            hintText: 'Email',
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value!.isEmpty) return 'Please enter email';
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                  .hasMatch(value)) {
+                                return 'Please enter valid email';
+                              }
+                              return null;
+                            },
                           ),
                         ],
                       ),
-                    ],
-                  );
-                } else {
-                  // Mobile layout - single column
-                  return Column(
-                    children: [
-                      Customtextfield(
-                        controller: _labNameController,
-                        hintText: 'Lab Name',
-                        validator: (value) =>
-                            value!.isEmpty ? 'Please enter lab name' : null,
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Customtextfield(
+                            controller: provider.labAddressController,
+                            hintText: 'Lab Address',
+                            maxLines: 3,
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter lab address'
+                                : null,
+                          ),
+                          SizedBox(height: 16),
+                          Customtextfield(
+                            controller: provider.cityStatePincodeController,
+                            hintText: 'City / State / Pincode',
+                            validator: (value) => value!.isEmpty
+                                ? 'Please enter city/state/pincode'
+                                : null,
+                          ),
+                          SizedBox(height: 16),
+                          Customtextfield(
+                            controller: provider.passwordController,
+                            hintText: 'Password',
+                            obscureText: true,
+                            validator: (value) {
+                              if (value!.isEmpty)
+                                return 'Please enter password';
+                              if (value.length < 8)
+                                return 'Password must be at least 8 characters';
+                              return null;
+                            },
+                          ),
+                          SizedBox(height: 16),
+                          Customtextfield(
+                            controller: provider.confirmPasswordController,
+                            hintText: 'Confirm Password',
+                            obscureText: true,
+                            validator: (value) {
+                              if (value!.isEmpty)
+                                return 'Please confirm password';
+                              if (value != provider.passwordController.text)
+                                return 'Passwords do not match';
+                              return null;
+                            },
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 16),
-                      Customtextfield(
-                        controller: _ownerNameController,
-                        hintText: 'Owner / Authorized Person Name',
-                        validator: (value) =>
-                            value!.isEmpty ? 'Please enter owner name' : null,
-                      ),
-                      SizedBox(height: 16),
-                      Customtextfield(
-                        controller: _contactNumberController,
-                        hintText: 'Contact Number',
-                        keyboardType: TextInputType.phone,
-                        validator: (value) {
-                          if (value!.isEmpty)
-                            return 'Please enter contact number';
-                          if (!_phonePattern.hasMatch(value))
-                            return 'Please enter valid phone number';
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 16),
-                      Customtextfield(
-                        controller: _emailController,
-                        hintText: 'Email',
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value!.isEmpty) return 'Please enter email';
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                              .hasMatch(value)) {
-                            return 'Please enter valid email';
-                          }
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 16),
-                      Customtextfield(
-                        controller: _labAddressController,
-                        hintText: 'Lab Address',
-                        maxLines: 3,
-                        validator: (value) =>
-                            value!.isEmpty ? 'Please enter lab address' : null,
-                      ),
-                      SizedBox(height: 16),
-                      Customtextfield(
-                        controller: _cityStatePincodeController,
-                        hintText: 'City / State / Pincode',
-                        validator: (value) => value!.isEmpty
-                            ? 'Please enter city/state/pincode'
-                            : null,
-                      ),
-                      SizedBox(height: 16),
-                      Customtextfield(
-                        controller: _passwordController,
-                        hintText: 'Password',
-                        obscureText: true,
-                        validator: (value) {
-                          if (value!.isEmpty) return 'Please enter password';
-                          if (value.length < 8)
-                            return 'Password must be at least 8 characters';
-                          return null;
-                        },
-                      ),
-                      SizedBox(height: 16),
-                      Customtextfield(
-                        controller: _confirmPasswordController,
-                        hintText: 'Confirm Password',
-                        obscureText: true,
-                        validator: (value) {
-                          if (value!.isEmpty) return 'Please confirm password';
-                          if (value != _passwordController.text)
-                            return 'Passwords do not match';
-                          return null;
-                        },
-                      ),
-                    ],
-                  );
-                }
-              },
-            ),
-          ],
-        ),
+                    ),
+                  ],
+                );
+              } else {
+                // Mobile layout - single column
+                return Column(
+                  children: [
+                    Customtextfield(
+                      controller: provider.labNameController,
+                      hintText: 'Lab Name',
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please enter lab name' : null,
+                    ),
+                    SizedBox(height: 16),
+                    Customtextfield(
+                      controller: provider.ownerNameController,
+                      hintText: 'Owner / Authorized Person Name',
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please enter owner name' : null,
+                    ),
+                    SizedBox(height: 16),
+                    Customtextfield(
+                      controller: provider.contactNumberController,
+                      hintText: 'Contact Number',
+                      keyboardType: TextInputType.phone,
+                      validator: (value) {
+                        if (value!.isEmpty)
+                          return 'Please enter contact number';
+                        if (!provider.phonePattern.hasMatch(value))
+                          return 'Please enter valid phone number';
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    Customtextfield(
+                      controller: provider.emailController,
+                      hintText: 'Email',
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value!.isEmpty) return 'Please enter email';
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
+                          return 'Please enter valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    Customtextfield(
+                      controller: provider.labAddressController,
+                      hintText: 'Lab Address',
+                      maxLines: 3,
+                      validator: (value) =>
+                          value!.isEmpty ? 'Please enter lab address' : null,
+                    ),
+                    SizedBox(height: 16),
+                    Customtextfield(
+                      controller: provider.cityStatePincodeController,
+                      hintText: 'City / State / Pincode',
+                      validator: (value) => value!.isEmpty
+                          ? 'Please enter city/state/pincode'
+                          : null,
+                    ),
+                    SizedBox(height: 16),
+                    Customtextfield(
+                      controller: provider.passwordController,
+                      hintText: 'Password',
+                      obscureText: true,
+                      validator: (value) {
+                        if (value!.isEmpty) return 'Please enter password';
+                        if (value.length < 8)
+                          return 'Password must be at least 8 characters';
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: 16),
+                    Customtextfield(
+                      controller: provider.confirmPasswordController,
+                      hintText: 'Confirm Password',
+                      obscureText: true,
+                      validator: (value) {
+                        if (value!.isEmpty) return 'Please confirm password';
+                        if (value != provider.passwordController.text)
+                          return 'Passwords do not match';
+                        return null;
+                      },
+                    ),
+                  ],
+                );
+              }
+            },
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildIdentityProofStep(AppTheme theme) {
+  Widget _buildIdentityProofStep(
+      BuildContext context, AppTheme theme, LabRegistrationProvider provider) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -628,7 +566,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
           ),
           SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: _selectedIdentityProof,
+            value: provider.selectedIdentityProof,
             decoration: InputDecoration(
               border: OutlineInputBorder(
                 borderRadius:
@@ -707,9 +645,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
               );
             }).toList(),
             onChanged: (String? newValue) {
-              setState(() {
-                _selectedIdentityProof = newValue;
-              });
+              provider.selectedIdentityProof = newValue;
             },
             validator: (value) =>
                 value == null ? 'Please select identity proof' : null,
@@ -731,7 +667,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
           ),
           SizedBox(height: 12),
           GestureDetector(
-            onTap: _pickIdentityDocument,
+            onTap: () => provider.pickIdentityDocument(),
             child: Container(
               height: 60,
               decoration: BoxDecoration(
@@ -759,7 +695,8 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
     );
   }
 
-  Widget _buildBusinessInformationStep(AppTheme theme) {
+  Widget _buildBusinessInformationStep(
+      BuildContext context, AppTheme theme, LabRegistrationProvider provider) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -799,7 +736,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
           SizedBox(height: 12),
 
           DropdownButtonFormField<String>(
-            value: _selectedBusinessType,
+            value: provider.selectedBusinessType,
             decoration: InputDecoration(
               border: OutlineInputBorder(
                 borderRadius:
@@ -884,9 +821,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
               );
             }).toList(),
             onChanged: (String? newValue) {
-              setState(() {
-                _selectedBusinessType = newValue;
-              });
+              provider.selectedBusinessType = newValue;
             },
             validator: (value) =>
                 value == null ? 'Please select business type' : null,
@@ -912,7 +847,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
           SizedBox(height: 12),
 
           GestureDetector(
-            onTap: _pickBusinessRegistrationFile,
+            onTap: () => provider.pickBusinessRegistrationFile(),
             child: Container(
               height: 60,
               decoration: BoxDecoration(
@@ -926,8 +861,8 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
               ),
               child: Center(
                 child: ResponsiveText(
-                  _businessRegistrationFile != null
-                      ? 'File selected: ${_businessRegistrationFile!.path.split('/').last}'
+                  provider.businessRegistrationFile != null
+                      ? 'File selected: ${provider.businessRegistrationFile!.path.split('/').last}'
                       : 'Tap to upload certificate',
                   style: TextStyle(
                     color: theme.colors.textSecondary,
@@ -969,11 +904,9 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
                     ),
                   ),
                   value: 'Yes',
-                  groupValue: _isGstRegistered,
+                  groupValue: provider.isGstRegistered,
                   onChanged: (String? value) {
-                    setState(() {
-                      _isGstRegistered = value;
-                    });
+                    provider.isGstRegistered = value;
                   },
                   activeColor: theme.colors.primary,
                 ),
@@ -988,11 +921,9 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
                     ),
                   ),
                   value: 'No',
-                  groupValue: _isGstRegistered,
+                  groupValue: provider.isGstRegistered,
                   onChanged: (String? value) {
-                    setState(() {
-                      _isGstRegistered = value;
-                    });
+                    provider.isGstRegistered = value;
                   },
                   activeColor: theme.colors.primary,
                 ),
@@ -1000,15 +931,15 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
             ],
           ),
 
-          if (_isGstRegistered == 'Yes') ...[
+          if (provider.isGstRegistered == 'Yes') ...[
             SizedBox(height: 20),
             Customtextfield(
-              controller: _gstNumberController,
+              controller: provider.gstNumberController,
               hintText: 'GST Number (15-digit GSTIN)',
               validator: (value) {
-                if (_isGstRegistered == 'Yes') {
+                if (provider.isGstRegistered == 'Yes') {
                   if (value!.isEmpty) return 'Please enter GST number';
-                  if (!_gstPattern.hasMatch(value))
+                  if (!provider.gstPattern.hasMatch(value))
                     return 'Please enter valid GST number';
                 }
                 return null;
@@ -1031,7 +962,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
             ),
             SizedBox(height: 12),
             GestureDetector(
-              onTap: _pickGstCertificateFile,
+              onTap: () => provider.pickGstCertificateFile(),
               child: Container(
                 height: 60,
                 decoration: BoxDecoration(
@@ -1045,8 +976,8 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
                 ),
                 child: Center(
                   child: ResponsiveText(
-                    _gstCertificateFile != null
-                        ? 'File selected: ${_gstCertificateFile!.path.split('/').last}'
+                    provider.gstCertificateFile != null
+                        ? 'File selected: ${provider.gstCertificateFile!.path.split('/').last}'
                         : 'Tap to upload GST certificate',
                     style: TextStyle(
                       color: theme.colors.textSecondary,
@@ -1062,7 +993,8 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
     );
   }
 
-  Widget _buildClinicalInformationStep(AppTheme theme) {
+  Widget _buildClinicalInformationStep(
+      BuildContext context, AppTheme theme, LabRegistrationProvider provider) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -1084,7 +1016,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
           ),
           SizedBox(height: 20),
           Customtextfield(
-            controller: _licenseNumberController,
+            controller: provider.licenseNumberController,
             hintText: 'Clinical Establishment License No.',
             validator: (value) =>
                 value!.isEmpty ? 'Please enter license number' : null,
@@ -1106,7 +1038,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
           ),
           SizedBox(height: 12),
           GestureDetector(
-            onTap: _pickClinicalLicenseFile,
+            onTap: () => provider.pickClinicalLicenseFile(),
             child: Container(
               height: 60,
               decoration: BoxDecoration(
@@ -1120,8 +1052,8 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
               ),
               child: Center(
                 child: ResponsiveText(
-                  _clinicalLicenseFile != null
-                      ? 'File selected: ${_clinicalLicenseFile!.path.split('/').last}'
+                  provider.clinicalLicenseFile != null
+                      ? 'File selected: ${provider.clinicalLicenseFile!.path.split('/').last}'
                       : 'Tap to upload license',
                   style: TextStyle(
                     color: theme.colors.textSecondary,
@@ -1148,7 +1080,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
           ),
           SizedBox(height: 12),
           GestureDetector(
-            onTap: _selectLicenseExpiryDate,
+            onTap: () => provider.selectLicenseExpiryDate(context),
             child: Container(
               height: 56,
               decoration: BoxDecoration(
@@ -1176,11 +1108,11 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
               child: Row(
                 children: [
                   ResponsiveText(
-                    _licenseExpiryDate != null
-                        ? '${_licenseExpiryDate!.day}/${_licenseExpiryDate!.month}/${_licenseExpiryDate!.year}'
+                    provider.licenseExpiryDate != null
+                        ? '${provider.licenseExpiryDate!.day}/${provider.licenseExpiryDate!.month}/${provider.licenseExpiryDate!.year}'
                         : 'Select expiry date',
                     style: TextStyle(
-                      color: _licenseExpiryDate != null
+                      color: provider.licenseExpiryDate != null
                           ? theme.colors.textPrimary
                           : theme.colors.textSecondary,
                       fontFamily: 'uber',
@@ -1197,7 +1129,7 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
           ),
           SizedBox(height: 16),
           Customtextfield(
-            controller: _issuedByController,
+            controller: provider.issuedByController,
             hintText: 'Issued By (Authority)',
             validator: (value) =>
                 value!.isEmpty ? 'Please enter issuing authority' : null,
@@ -1207,214 +1139,42 @@ class _LabRegistrationFormState extends State<LabRegistrationForm> {
     );
   }
 
-  Widget _buildNavigationButtons(AppTheme theme) {
+  Widget _buildNavigationButtons(
+      BuildContext context, AppTheme theme, LabRegistrationProvider provider) {
     return Container(
       padding: EdgeInsets.all(16),
       child: Row(
         children: [
-          if (_currentStep > 0)
+          if (provider.currentStep > 0)
             Expanded(
               child: Custombutton(
                 text: 'Previous',
-                onTap: () {
-                  _pageController.previousPage(
-                    duration: Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                  );
-                },
+                onTap: () => provider.previousStep(),
               ),
             ),
-          if (_currentStep > 0) SizedBox(width: 16),
+          if (provider.currentStep > 0) SizedBox(width: 16),
           Expanded(
             child: Custombutton(
-              text: _currentStep == _totalSteps - 1
+              text: provider.currentStep == provider.totalSteps - 1
                   ? 'Submit Registration'
                   : 'Next',
-              onTap: _currentStep == _totalSteps - 1
-                  ? _submitRegistration
-                  : _nextStep,
+              onTap: provider.currentStep == provider.totalSteps - 1
+                  ? () => provider.submitRegistration(context)
+                  : () {
+                      if (provider.validateCurrentStep()) {
+                        provider.nextStep();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content:
+                                  Text('Please complete all required fields')),
+                        );
+                      }
+                    },
             ),
           ),
         ],
       ),
     );
-  }
-
-  void _nextStep() {
-    if (_validateCurrentStep()) {
-      _pageController.nextPage(
-        duration: Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
-  bool _validateCurrentStep() {
-    switch (_currentStep) {
-      case 0:
-        return _formKey.currentState!.validate();
-      case 1:
-        if (_selectedIdentityProof == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please select identity proof')),
-          );
-          return false;
-        }
-        return true;
-      case 2:
-        if (_selectedBusinessType == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please select business type')),
-          );
-          return false;
-        }
-        if (_isGstRegistered == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please select GST registration status')),
-          );
-          return false;
-        }
-        return true;
-      case 3:
-        if (_licenseExpiryDate == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please select license expiry date')),
-          );
-          return false;
-        }
-        return true;
-      default:
-        return true;
-    }
-  }
-
-  void _submitRegistration() {
-    if (_validateCurrentStep()) {
-      // Here you would typically:
-      // 1. Validate all documents
-      // 2. Upload files to server
-      // 3. Save lab data to database
-      // 4. Set status to 'under_review'
-      // 5. Navigate to verification pending screen
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Registration submitted successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      // Navigate to verification pending screen
-      Navigator.pushReplacementNamed(context, '/verification-pending');
-    }
-  }
-
-  Future<void> _pickIdentityDocument() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      );
-
-      if (result != null) {
-        setState(() {
-          // Store the file path or upload to server
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
-    }
-  }
-
-  Future<void> _pickBusinessRegistrationFile() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      );
-
-      if (result != null) {
-        setState(() {
-          _businessRegistrationFile = File(result.files.single.path!);
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
-    }
-  }
-
-  Future<void> _pickGstCertificateFile() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      );
-
-      if (result != null) {
-        setState(() {
-          _gstCertificateFile = File(result.files.single.path!);
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
-    }
-  }
-
-  Future<void> _pickClinicalLicenseFile() async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      );
-
-      if (result != null) {
-        setState(() {
-          _clinicalLicenseFile = File(result.files.single.path!);
-        });
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking file: $e')),
-      );
-    }
-  }
-
-  Future<void> _selectLicenseExpiryDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now().add(Duration(days: 365)),
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(Duration(days: 3650)),
-    );
-
-    if (picked != null) {
-      setState(() {
-        _licenseExpiryDate = picked;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    _labNameController.dispose();
-    _ownerNameController.dispose();
-    _contactNumberController.dispose();
-    _emailController.dispose();
-    _labAddressController.dispose();
-    _cityStatePincodeController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _gstNumberController.dispose();
-    _panNumberController.dispose();
-    _licenseNumberController.dispose();
-    _issuedByController.dispose();
-    super.dispose();
   }
 }

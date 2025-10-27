@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:labtest/provider/navigatorprodiver.dart';
-import 'package:labtest/screen/Auth/registration/Registrationpage.dart';
-import 'package:labtest/screen/Auth/verification_pending_screen.dart';
+import 'package:labtest/provider/lab_registration_provider.dart';
+import 'package:labtest/provider/login_provider.dart';
+import 'package:labtest/router/app_router.dart';
 import 'package:labtest/store/app_theme.dart';
+import 'package:labtest/utils/k_debug_print.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -11,14 +13,22 @@ NavigatorProvider navigatorProvider = NavigatorProvider();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  KDebugPrint.info('Initializing Blood Lab Management System');
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  KDebugPrint.success('Firebase initialized successfully');
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => NavigatorProvider()),
         ChangeNotifierProvider(create: (context) => AppTheme()),
+        ChangeNotifierProvider(create: (context) => LabRegistrationProvider()),
+        ChangeNotifierProvider(create: (context) => LoginProvider()),
       ],
       child: const MyApp(),
     ),
@@ -32,19 +42,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AppTheme>(
       builder: (context, theme, child) {
-        return MaterialApp(
+        return MaterialApp.router(
           title: 'Blood Lab Management System',
           debugShowCheckedModeBanner: false,
           theme: theme.themeData,
-          home: RegistrationPage(),
-          routes: {
-            '/verification-pending': (context) => VerificationPendingScreen(),
-            '/login': (context) => RegistrationPage(),
-          },
+          routerConfig: AppRouter.router,
           builder: (context, child) {
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(
-                textScaleFactor: 1.0, // Prevent text scaling on web
+                textScaler:
+                    TextScaler.linear(1.0), // Prevent text scaling on web
               ),
               child: child!,
             );
