@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:labtest/provider/navigatorprodiver.dart';
+import 'package:labtest/provider/test_request_provider.dart';
 import 'package:labtest/screen/active_screen/active_screen.dart';
 import 'package:labtest/screen/complete_screen/complete_screen.dart';
 import 'package:labtest/screen/dashboard/Topappbar.dart';
 import 'package:labtest/screen/dashboard/dashboardContent.dart';
 import 'package:labtest/screen/pending_screen/pending_screen.dart';
+import 'package:labtest/screen/test_requests/test_requests_screen.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:labtest/widget/Myscaffold.dart';
 import 'package:labtest/widget/Navitem.dart';
 import 'package:labtest/widget/customTextfield.dart';
 import 'package:labtest/widget/custombutton.dart';
+import 'package:labtest/widget/link_share_dialog.dart';
 import 'package:provider/provider.dart';
 
 class BloodLabHomePage extends StatelessWidget {
@@ -36,7 +39,10 @@ class BloodLabHomePage extends StatelessWidget {
   }
 
   Widget _buildMobileLayout(
-      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    BuildContext context,
+    NavigatorProvider provider,
+    AppTheme theme,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: ResponsiveText(
@@ -70,7 +76,10 @@ class BloodLabHomePage extends StatelessWidget {
   }
 
   Widget _buildTabletLayout(
-      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    BuildContext context,
+    NavigatorProvider provider,
+    AppTheme theme,
+  ) {
     return Scaffold(
       appBar: AppBar(
         title: ResponsiveText(
@@ -104,7 +113,10 @@ class BloodLabHomePage extends StatelessWidget {
   }
 
   Widget _buildDesktopLayout(
-      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    BuildContext context,
+    NavigatorProvider provider,
+    AppTheme theme,
+  ) {
     return Row(
       children: [
         // Sidebar
@@ -128,12 +140,13 @@ class BloodLabHomePage extends StatelessWidget {
           child: Column(
             children: [
               SizedBox(
-                  height: ResponsiveHelper.getResponsiveValue(
-                context,
-                mobile: 20,
-                tablet: 30,
-                desktop: 50,
-              )),
+                height: ResponsiveHelper.getResponsiveValue(
+                  context,
+                  mobile: 20,
+                  tablet: 30,
+                  desktop: 50,
+                ),
+              ),
               ResponsiveText(
                 'Blood Lab',
                 style: TextStyle(
@@ -149,12 +162,13 @@ class BloodLabHomePage extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(
-                  height: ResponsiveHelper.getResponsiveValue(
-                context,
-                mobile: 20,
-                tablet: 30,
-                desktop: 40,
-              )),
+                height: ResponsiveHelper.getResponsiveValue(
+                  context,
+                  mobile: 20,
+                  tablet: 30,
+                  desktop: 40,
+                ),
+              ),
               const Divider(color: Colors.white54),
               Expanded(
                 child: Column(
@@ -177,23 +191,22 @@ class BloodLabHomePage extends StatelessWidget {
           ),
         ),
         // Main Content Area
-        Expanded(
-          child: _buildBody(context, provider, theme),
-        ),
+        Expanded(child: _buildBody(context, provider, theme)),
       ],
     );
   }
 
   Widget _buildDrawer(
-      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    BuildContext context,
+    NavigatorProvider provider,
+    AppTheme theme,
+  ) {
     return Drawer(
       backgroundColor: theme.colors.primary,
       child: ListView(
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(
-              color: theme.colors.primary,
-            ),
+            decoration: BoxDecoration(color: theme.colors.primary),
             child: ResponsiveText(
               'Blood Lab',
               style: TextStyle(
@@ -216,7 +229,10 @@ class BloodLabHomePage extends StatelessWidget {
   }
 
   List<Widget> _buildNavigationItems(
-      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    BuildContext context,
+    NavigatorProvider provider,
+    AppTheme theme,
+  ) {
     return [
       NavItem(
         icon: Iconsax.home_1,
@@ -243,10 +259,10 @@ class BloodLabHomePage extends StatelessWidget {
         onTap: () => provider.currentIndex = 3,
       ),
       NavItem(
-        icon: Iconsax.user_tick,
-        label: 'Flavo History',
-        isSelected: false,
-        onTap: () {},
+        icon: Iconsax.document_text,
+        label: 'Test Requests',
+        isSelected: provider.currentIndex == 4,
+        onTap: () => provider.currentIndex = 4,
       ),
       NavItem(
         icon: Icons.settings,
@@ -258,7 +274,10 @@ class BloodLabHomePage extends StatelessWidget {
   }
 
   Widget _buildBody(
-      BuildContext context, NavigatorProvider provider, AppTheme theme) {
+    BuildContext context,
+    NavigatorProvider provider,
+    AppTheme theme,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -275,9 +294,7 @@ class BloodLabHomePage extends StatelessWidget {
             onTap: () => _showAddRequestDialog(context),
           ),
         ),
-        Expanded(
-          child: _buildCurrentScreen(provider),
-        ),
+        Expanded(child: _buildCurrentScreen(provider)),
       ],
     );
   }
@@ -292,6 +309,8 @@ class BloodLabHomePage extends StatelessWidget {
         return AcceptedRequestsScreen();
       case 3:
         return CompleteScreen();
+      case 4:
+        return TestRequestsScreen();
       default:
         return DashboardContent();
     }
@@ -315,7 +334,7 @@ class BloodLabHomePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ResponsiveText(
-                    "Add Collection Request",
+                    "Create Test Request",
                     style: TextStyle(
                       fontFamily: 'uber',
                       fontSize: ResponsiveHelper.getResponsiveFontSize(
@@ -339,7 +358,7 @@ class BloodLabHomePage extends StatelessWidget {
                         desktop: 30,
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
               content: Form(
@@ -351,108 +370,154 @@ class BloodLabHomePage extends StatelessWidget {
                     tablet: 320,
                     desktop: 360,
                   ),
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Customtextfield(
-                      controller: patientNameController,
-                      hintText: "Patient Name",
-                      validator: (value) =>
-                          value!.isEmpty ? 'Enter patient name' : null,
-                    ),
-                    SizedBox(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Customtextfield(
+                        controller: patientNameController,
+                        hintText: "Patient Name",
+                        validator:
+                            (value) =>
+                                value!.isEmpty ? 'Enter patient name' : null,
+                      ),
+                      SizedBox(
                         height: ResponsiveHelper.getResponsiveValue(
-                      context,
-                      mobile: 12,
-                      tablet: 16,
-                      desktop: 20,
-                    )),
-                    Customtextfield(
-                      controller: testTypeController,
-                      hintText: "Test Type",
-                      validator: (value) =>
-                          value!.isEmpty ? 'Enter test type' : null,
-                    ),
-                    SizedBox(
-                        height: ResponsiveHelper.getResponsiveValue(
-                      context,
-                      mobile: 12,
-                      tablet: 16,
-                      desktop: 20,
-                    )),
-                    DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: theme.colors.border,
-                            width: 2.0,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: theme.colors.primary,
-                            width: 2.0,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: theme.colors.border,
-                            width: 2.0,
-                          ),
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
                         ),
                       ),
-                      value: urgency,
-                      hint: ResponsiveText(
-                        "Urgency",
-                        style: TextStyle(
-                          color: theme.colors.textSecondary,
-                          fontFamily: 'uber',
+                      Customtextfield(
+                        controller: locationController,
+                        hintText: "Location",
+                        validator:
+                            (value) => value!.isEmpty ? 'Enter location' : null,
+                      ),
+                      SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
                         ),
                       ),
-                      items: ['Normal', 'Urgent'].map((String value) {
-                        return DropdownMenuItem<String>(
-                            value: value,
-                            child: ResponsiveText(
-                              value,
-                              style: TextStyle(
-                                fontFamily: 'uber',
-                                fontWeight: FontWeight.bold,
-                                color: theme.colors.textPrimary,
-                              ),
-                            ));
-                      }).toList(),
-                      onChanged: (newValue) {
-                        urgency = newValue!;
-                      },
-                    ),
-                    SizedBox(
+                      Customtextfield(
+                        controller: testTypeController,
+                        hintText: "Blood Test Type",
+                        validator:
+                            (value) =>
+                                value!.isEmpty ? 'Enter test type' : null,
+                      ),
+                      SizedBox(
                         height: ResponsiveHelper.getResponsiveValue(
-                      context,
-                      mobile: 12,
-                      tablet: 16,
-                      desktop: 20,
-                    )),
-                    Customtextfield(
-                      controller: locationController,
-                      hintText: "Location",
-                      validator: (value) =>
-                          value!.isEmpty ? 'Enter location' : null,
-                    ),
-                    SizedBox(
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
+                        ),
+                      ),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colors.border,
+                              width: 2.0,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colors.primary,
+                              width: 2.0,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colors.border,
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                        value: urgency,
+                        hint: ResponsiveText(
+                          "Urgency",
+                          style: TextStyle(
+                            color: theme.colors.textSecondary,
+                            fontFamily: 'uber',
+                          ),
+                        ),
+                        items:
+                            ['Normal', 'Urgent'].map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: ResponsiveText(
+                                  value,
+                                  style: TextStyle(
+                                    fontFamily: 'uber',
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colors.textPrimary,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                        onChanged: (newValue) {
+                          urgency = newValue!;
+                        },
+                      ),
+                      SizedBox(
                         height: ResponsiveHelper.getResponsiveValue(
-                      context,
-                      mobile: 12,
-                      tablet: 16,
-                      desktop: 20,
-                    )),
-                    Custombutton(
-                      onTap: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Handle form submission (e.g., save to database)
-                          Navigator.pop(context);
-                        }
-                      },
-                      text: 'Add Request',
-                    ),
-                  ]),
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
+                        ),
+                      ),
+                      Custombutton(
+                        onTap: () async {
+                          if (_formKey.currentState!.validate()) {
+                            // Get the test request provider
+                            final testRequestProvider =
+                                Provider.of<TestRequestProvider>(
+                                  context,
+                                  listen: false,
+                                );
+
+                            // Close dialog first
+                            Navigator.pop(context);
+
+                            // Create test request
+                            final formLink = await testRequestProvider
+                                .createTestRequest(
+                                  patientName: patientNameController.text,
+                                  location: locationController.text,
+                                  bloodTestType: testTypeController.text,
+                                  urgency: urgency,
+                                  context: context,
+                                );
+
+                            // Show link share dialog if successful
+                            if (formLink != null) {
+                              await showDialog(
+                                context: context,
+                                builder:
+                                    (context) => LinkShareDialog(
+                                      formLink: formLink,
+                                      patientName: patientNameController.text,
+                                      testType: testTypeController.text,
+                                    ),
+                              );
+                            }
+
+                            // Clear controllers
+                            patientNameController.clear();
+                            locationController.clear();
+                            testTypeController.clear();
+                          }
+                        },
+                        text: 'Send Request',
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

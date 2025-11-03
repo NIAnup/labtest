@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:labtest/screen/Auth/login/LoginPage.dart';
 import 'package:labtest/screen/Auth/registration/lab_registration_form.dart';
 import 'package:labtest/screen/Auth/verification_pending_screen.dart';
+import 'package:labtest/screen/Auth/forgot_password_screen.dart';
 import 'package:labtest/screen/dashboard/dashboard.dart';
+import 'package:labtest/screen/client_form/client_form_screen.dart';
 import 'package:labtest/utils/route_names.dart';
 import 'package:labtest/utils/k_debug_print.dart';
 
@@ -28,6 +30,11 @@ class AppRouter {
         name: 'verificationPending',
         builder: (context, state) => VerificationPendingScreen(),
       ),
+      GoRoute(
+        path: RouteNames.forgotPassword,
+        name: 'forgotPassword',
+        builder: (context, state) => ForgotPasswordScreen(),
+      ),
 
       // Dashboard Routes
       GoRoute(
@@ -39,6 +46,16 @@ class AppRouter {
         path: RouteNames.home,
         name: 'home',
         builder: (context, state) => BloodLabHomePage(),
+      ),
+
+      // Client Form Route
+      GoRoute(
+        path: RouteNames.clientForm,
+        name: 'clientForm',
+        builder: (context, state) {
+          final formLinkId = state.pathParameters['formLinkId'] ?? '';
+          return ClientFormScreen(formLinkId: formLinkId);
+        },
       ),
 
       // Root route redirects to login
@@ -66,34 +83,22 @@ class _ErrorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Error'),
-      ),
+      appBar: AppBar(title: Text('Error')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 64,
-              color: Colors.red,
-            ),
+            Icon(Icons.error_outline, size: 64, color: Colors.red),
             SizedBox(height: 16),
             Text(
               'Something went wrong!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             if (error != null)
               Text(
                 error.toString(),
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 textAlign: TextAlign.center,
               ),
             SizedBox(height: 24),

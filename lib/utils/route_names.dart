@@ -4,6 +4,7 @@ class RouteNames {
   static const String registration = '/registration';
   static const String labRegistration = '/lab-registration';
   static const String verificationPending = '/verification-pending';
+  static const String forgotPassword = '/forgot-password';
   
   // Dashboard Routes
   static const String dashboard = '/dashboard';
@@ -32,6 +33,9 @@ class RouteNames {
   
   // Splash Route
   static const String splash = '/splash';
+  
+  // Client Routes
+  static const String clientForm = '/form/:formLinkId';
   
   // Root Route
   static const String root = '/';

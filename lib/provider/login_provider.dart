@@ -108,12 +108,7 @@ class LoginProvider extends ChangeNotifier {
   }
 
   void forgotPassword(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Forgot password functionality coming soon'),
-        backgroundColor: Colors.orange,
-      ),
-    );
+    context.go(RouteNames.forgotPassword);
   }
 
   void clearForm() {

@@ -41,13 +41,14 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBX5Cop9JZJ5agbuMoMDOib3wyEWgh_v4Q',
-    appId: '1:222818623791:web:f7da92ade9544d609941da',
-    messagingSenderId: '222818623791',
-    projectId: 'labtest-e4b35',
-    authDomain: 'labtest-e4b35.firebaseapp.com',
-    storageBucket: 'labtest-e4b35.firebasestorage.app',
-    measurementId: 'G-H5MFG811WH',
+    apiKey: 'AIzaSyC6lB0jz-0cJOMJ2hmsVUx9DCnNKpsAQvI',
+    appId: '1:350345097479:web:946a0232d8bbcfd1a755a2',
+    messagingSenderId: '350345097479',
+    projectId: 'bloodcollection-9117d',
+    authDomain: 'bloodcollection-9117d.firebaseapp.com',
+    databaseURL: 'https://bloodcollection-9117d-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'bloodcollection-9117d.firebasestorage.app',
+    measurementId: 'G-WW7YKK0N70',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -68,21 +69,24 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCd-rjYzjdGaNA3gbO3xyprY7-XI3wtx14',
-    appId: '1:222818623791:ios:0c44ae0227e8e44d9941da',
-    messagingSenderId: '222818623791',
-    projectId: 'labtest-e4b35',
-    storageBucket: 'labtest-e4b35.firebasestorage.app',
+    apiKey: 'AIzaSyDwsPBXw98Fh8h6gTK4jH0DDPs2KZf9TJo',
+    appId: '1:350345097479:ios:4d6f0bf38f626976a755a2',
+    messagingSenderId: '350345097479',
+    projectId: 'bloodcollection-9117d',
+    databaseURL: 'https://bloodcollection-9117d-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'bloodcollection-9117d.firebasestorage.app',
     iosBundleId: 'com.example.labtest',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBX5Cop9JZJ5agbuMoMDOib3wyEWgh_v4Q',
-    appId: '1:222818623791:web:75c43eb4519b42c39941da',
-    messagingSenderId: '222818623791',
-    projectId: 'labtest-e4b35',
-    authDomain: 'labtest-e4b35.firebaseapp.com',
-    storageBucket: 'labtest-e4b35.firebasestorage.app',
-    measurementId: 'G-HY207PQL8R',
+    apiKey: 'AIzaSyC6lB0jz-0cJOMJ2hmsVUx9DCnNKpsAQvI',
+    appId: '1:350345097479:web:acc02c5a2aa32772a755a2',
+    messagingSenderId: '350345097479',
+    projectId: 'bloodcollection-9117d',
+    authDomain: 'bloodcollection-9117d.firebaseapp.com',
+    databaseURL: 'https://bloodcollection-9117d-default-rtdb.asia-southeast1.firebasedatabase.app',
+    storageBucket: 'bloodcollection-9117d.firebasestorage.app',
+    measurementId: 'G-FDH0TZSEHD',
   );
+
 }

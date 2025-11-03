@@ -21,6 +21,7 @@ class LoginPage extends StatelessWidget {
                 desktop: 1000,
               ),
               decoration: BoxDecoration(
+                color: theme.colors.background,
                 borderRadius:
                     BorderRadius.circular(ResponsiveHelper.getResponsiveValue(
                   context,
@@ -36,7 +37,7 @@ class LoginPage extends StatelessWidget {
                   BoxShadow(
                     color: theme.colors.shadow,
                     blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    offset: const Offset(0, 0),
                   ),
                 ],
               ),

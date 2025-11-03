@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:labtest/provider/navigatorprodiver.dart';
 import 'package:labtest/provider/lab_registration_provider.dart';
 import 'package:labtest/provider/login_provider.dart';
+import 'package:labtest/provider/test_request_provider.dart';
 import 'package:labtest/router/app_router.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/utils/k_debug_print.dart';
@@ -16,9 +17,7 @@ void main() async {
 
   KDebugPrint.info('Initializing Blood Lab Management System');
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   KDebugPrint.success('Firebase initialized successfully');
 
@@ -29,6 +28,7 @@ void main() async {
         ChangeNotifierProvider(create: (context) => AppTheme()),
         ChangeNotifierProvider(create: (context) => LabRegistrationProvider()),
         ChangeNotifierProvider(create: (context) => LoginProvider()),
+        ChangeNotifierProvider(create: (context) => TestRequestProvider()),
       ],
       child: const MyApp(),
     ),
@@ -50,8 +50,9 @@ class MyApp extends StatelessWidget {
           builder: (context, child) {
             return MediaQuery(
               data: MediaQuery.of(context).copyWith(
-                textScaler:
-                    TextScaler.linear(1.0), // Prevent text scaling on web
+                textScaler: TextScaler.linear(
+                  1.0,
+                ), // Prevent text scaling on web
               ),
               child: child!,
             );
