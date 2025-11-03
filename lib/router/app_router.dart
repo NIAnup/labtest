@@ -50,8 +50,8 @@ class AppRouter {
 
       // Client Form Route
       GoRoute(
-        path: RouteNames.clientForm,
-        name: 'clientForm',
+        path: '/form/:formLinkId',
+        name: RouteNames.clientForm,
         builder: (context, state) {
           final formLinkId = state.pathParameters['formLinkId'] ?? '';
           return ClientFormScreen(formLinkId: formLinkId);

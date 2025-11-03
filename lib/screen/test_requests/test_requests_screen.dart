@@ -4,6 +4,8 @@ import 'package:labtest/provider/test_request_provider.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/widget/test_request_card.dart';
+import 'package:labtest/widget/customTextfield.dart';
+import 'package:labtest/widget/custombutton.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -32,15 +34,18 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-        parent: _animationController, curve: Curves.easeOutCubic));
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
 
     _animationController.forward();
-    
+
     // Load test requests
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<TestRequestProvider>(context, listen: false)
-          .fetchTestRequests();
+      Provider.of<TestRequestProvider>(
+        context,
+        listen: false,
+      ).fetchTestRequests();
     });
   }
 
@@ -99,11 +104,7 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
                   ),
                   child: Column(
                     children: [
-                      Icon(
-                        Icons.person,
-                        size: 64,
-                        color: colors.primary,
-                      ),
+                      Icon(Icons.person, size: 64, color: colors.primary),
                       const SizedBox(height: 16),
                       Text(
                         request.patientName,
@@ -167,7 +168,7 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
                 ),
                 if (request.isSubmitted)
                   _buildDetailRow(
-                    Icons.tick_circle,
+                    Iconsax.tick_circle,
                     "Submitted",
                     _formatDate(request.submittedAt!),
                     colors,
@@ -182,8 +183,12 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
   }
 
   Widget _buildDetailRow(
-      IconData icon, String label, String value, AppColors colors,
-      {Color? valueColor}) {
+    IconData icon,
+    String label,
+    String value,
+    AppColors colors, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -249,6 +254,203 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _showEditDialog(TestRequest request) {
+    final theme = AppTheme();
+    final colors = theme.colors;
+    final _formKey = GlobalKey<FormState>();
+    final TextEditingController patientNameController = TextEditingController(
+      text: request.patientName,
+    );
+    final TextEditingController locationController = TextEditingController(
+      text: request.location,
+    );
+    final TextEditingController testTypeController = TextEditingController(
+      text: request.bloodTestType,
+    );
+    String urgency = request.urgency;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Consumer<AppTheme>(
+          builder: (context, theme, child) {
+            return AlertDialog(
+              backgroundColor: theme.colors.surface,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ResponsiveText(
+                    "Edit Test Request",
+                    style: TextStyle(
+                      fontFamily: 'uber',
+                      fontSize: ResponsiveHelper.getResponsiveFontSize(
+                        context,
+                        mobile: 14,
+                        tablet: 16,
+                        desktop: 18,
+                      ),
+                      color: theme.colors.textPrimary,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(
+                      Iconsax.close_square,
+                      color: theme.colors.textPrimary,
+                      size: ResponsiveHelper.getResponsiveValue(
+                        context,
+                        mobile: 24,
+                        tablet: 28,
+                        desktop: 30,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Form(
+                key: _formKey,
+                child: SizedBox(
+                  width: ResponsiveHelper.getResponsiveValue(
+                    context,
+                    mobile: 280,
+                    tablet: 320,
+                    desktop: 360,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Customtextfield(
+                        controller: patientNameController,
+                        hintText: "Patient Name",
+                        validator: (value) =>
+                            value!.isEmpty ? 'Enter patient name' : null,
+                      ),
+                      SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
+                        ),
+                      ),
+                      Customtextfield(
+                        controller: locationController,
+                        hintText: "Location",
+                        validator: (value) =>
+                            value!.isEmpty ? 'Enter location' : null,
+                      ),
+                      SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
+                        ),
+                      ),
+                      Customtextfield(
+                        controller: testTypeController,
+                        hintText: "Blood Test Type",
+                        validator: (value) =>
+                            value!.isEmpty ? 'Enter test type' : null,
+                      ),
+                      SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
+                        ),
+                      ),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colors.border,
+                              width: 2.0,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colors.primary,
+                              width: 2.0,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: theme.colors.border,
+                              width: 2.0,
+                            ),
+                          ),
+                        ),
+                        value: urgency,
+                        hint: ResponsiveText(
+                          "Urgency",
+                          style: TextStyle(
+                            color: theme.colors.textSecondary,
+                            fontFamily: 'uber',
+                          ),
+                        ),
+                        items: ['Normal', 'Urgent'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: ResponsiveText(
+                              value,
+                              style: TextStyle(
+                                fontFamily: 'uber',
+                                fontWeight: FontWeight.bold,
+                                color: theme.colors.textPrimary,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          urgency = newValue!;
+                        },
+                      ),
+                      SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                          context,
+                          mobile: 12,
+                          tablet: 16,
+                          desktop: 20,
+                        ),
+                      ),
+                      Custombutton(
+                        onTap: () async {
+                          if (_formKey.currentState!.validate()) {
+                            final testRequestProvider =
+                                Provider.of<TestRequestProvider>(
+                              context,
+                              listen: false,
+                            );
+
+                            Navigator.pop(context);
+
+                            if (request.id != null) {
+                              await testRequestProvider.updateRequest(
+                                requestId: request.id!,
+                                patientName: patientNameController.text,
+                                location: locationController.text,
+                                bloodTestType: testTypeController.text,
+                                urgency: urgency,
+                                context: context,
+                              );
+                            }
+                          }
+                        },
+                        text: 'Update Request',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -340,11 +542,17 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
                             ? _buildEmptyState(colors)
                             : ResponsiveLayout(
                                 mobile: _buildMobileList(
-                                  testRequestProvider, colors),
+                                  testRequestProvider,
+                                  colors,
+                                ),
                                 tablet: _buildTabletList(
-                                  testRequestProvider, colors),
+                                  testRequestProvider,
+                                  colors,
+                                ),
                                 desktop: _buildDesktopList(
-                                  testRequestProvider, colors),
+                                  testRequestProvider,
+                                  colors,
+                                ),
                               ),
                   ),
                 ],
@@ -367,11 +575,7 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
               color: colors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Iconsax.document_text,
-              size: 64,
-              color: colors.primary,
-            ),
+            child: Icon(Iconsax.document_text, size: 64, color: colors.primary),
           ),
           const SizedBox(height: 24),
           Text(
@@ -397,8 +601,7 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
     );
   }
 
-  Widget _buildMobileList(
-      TestRequestProvider provider, AppColors colors) {
+  Widget _buildMobileList(TestRequestProvider provider, AppColors colors) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       itemCount: provider.testRequests.length,
@@ -409,6 +612,7 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
           child: TestRequestCard(
             request: request,
             onViewDetails: () => _showRequestDetails(request),
+            onEdit: () => _showEditDialog(request),
             onUpdateStatus: () async {
               if (request.id != null) {
                 await provider.updateRequestStatus(
@@ -432,8 +636,7 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
     );
   }
 
-  Widget _buildTabletList(
-      TestRequestProvider provider, AppColors colors) {
+  Widget _buildTabletList(TestRequestProvider provider, AppColors colors) {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -448,6 +651,7 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
         return TestRequestCard(
           request: request,
           onViewDetails: () => _showRequestDetails(request),
+          onEdit: () => _showEditDialog(request),
           onUpdateStatus: () async {
             if (request.id != null) {
               await provider.updateRequestStatus(
@@ -470,8 +674,7 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
     );
   }
 
-  Widget _buildDesktopList(
-      TestRequestProvider provider, AppColors colors) {
+  Widget _buildDesktopList(TestRequestProvider provider, AppColors colors) {
     return GridView.builder(
       padding: const EdgeInsets.all(24),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -486,6 +689,7 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
         return TestRequestCard(
           request: request,
           onViewDetails: () => _showRequestDetails(request),
+          onEdit: () => _showEditDialog(request),
           onUpdateStatus: () async {
             if (request.id != null) {
               await provider.updateRequestStatus(
@@ -508,4 +712,3 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
     );
   }
 }
-

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:labtest/utils/custom_snackbar.dart';
@@ -46,7 +47,7 @@ class LinkShareDialog extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    Iconsax.link_success,
+                    Iconsax.link,
                     color: colors.success,
                     size: 48,
                   ),
@@ -165,22 +166,101 @@ class LinkShareDialog extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Action buttons
-                Row(
+                Column(
                   children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              side: BorderSide(color: colors.border),
+                            ),
+                            child: Text(
+                              "Close",
+                              style: TextStyle(
+                                color: colors.textPrimary,
+                                fontFamily: "uber",
+                                fontWeight: FontWeight.w600,
+                                fontSize:
+                                    ResponsiveHelper.getResponsiveFontSize(
+                                  context,
+                                  mobile: 14,
+                                  tablet: 15,
+                                  desktop: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                _copyToClipboard(context, formLink),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.primary,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Iconsax.copy,
+                                  color: colors.onPrimary,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Copy Link",
+                                  style: TextStyle(
+                                    color: colors.onPrimary,
+                                    fontFamily: "uber",
+                                    fontWeight: FontWeight.w600,
+                                    fontSize:
+                                        ResponsiveHelper.getResponsiveFontSize(
+                                      context,
+                                      mobile: 14,
+                                      tablet: 15,
+                                      desktop: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // View Form button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _viewForm(context),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          side: BorderSide(color: colors.border),
+                          side: BorderSide(color: colors.success, width: 2),
                         ),
-                        child: Text(
-                          "Close",
+                        icon: Icon(
+                          Iconsax.eye,
+                          color: colors.success,
+                          size: 18,
+                        ),
+                        label: Text(
+                          "View Form",
                           style: TextStyle(
-                            color: colors.textPrimary,
+                            color: colors.success,
                             fontFamily: "uber",
                             fontWeight: FontWeight.w600,
                             fontSize: ResponsiveHelper.getResponsiveFontSize(
@@ -190,45 +270,6 @@ class LinkShareDialog extends StatelessWidget {
                               desktop: 16,
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => _copyToClipboard(context, formLink),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Iconsax.copy,
-                              color: colors.onPrimary,
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              "Copy Link",
-                              style: TextStyle(
-                                color: colors.onPrimary,
-                                fontFamily: "uber",
-                                fontWeight: FontWeight.w600,
-                                fontSize:
-                                    ResponsiveHelper.getResponsiveFontSize(
-                                      context,
-                                      mobile: 14,
-                                      tablet: 15,
-                                      desktop: 16,
-                                    ),
-                              ),
-                            ),
-                          ],
                         ),
                       ),
                     ),
@@ -245,5 +286,17 @@ class LinkShareDialog extends StatelessWidget {
   void _copyToClipboard(BuildContext context, String text) {
     Clipboard.setData(ClipboardData(text: text));
     CustomSnackBar.success(context, 'Link copied to clipboard!');
+  }
+
+  void _viewForm(BuildContext context) {
+    // Extract formLinkId from the URL
+    final uri = Uri.parse(formLink);
+    final formLinkId = uri.pathSegments.last;
+
+    // Close the dialog
+    Navigator.pop(context);
+
+    // Navigate to the form
+    context.push('/form/$formLinkId');
   }
 }

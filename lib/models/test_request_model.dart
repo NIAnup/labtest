@@ -95,9 +95,14 @@ class TestRequest {
   }
 
   // Get the shareable form link
-  String getFormLink() {
-    // In production, this would be the actual domain
-    return 'https://labtest.com/form/$formLinkId';
+  String getFormLink({bool useAbsoluteUrl = true}) {
+    if (useAbsoluteUrl) {
+      // In production, this would be the actual domain
+      return 'https://labtest.com/form/$formLinkId';
+    } else {
+      // Relative URL for in-app navigation
+      return '/form/$formLinkId';
+    }
   }
 
   // Check if form has been submitted

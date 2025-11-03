@@ -246,6 +246,50 @@ class TestRequestProvider extends ChangeNotifier {
     }
   }
 
+  /// Update request details
+  Future<bool> updateRequest({
+    required String requestId,
+    required String patientName,
+    required String location,
+    required String bloodTestType,
+    required String urgency,
+    BuildContext? context,
+  }) async {
+    try {
+      isLoading = true;
+      error = null;
+
+      await _firestore.collection('test_requests').doc(requestId).update({
+        'patientName': patientName,
+        'location': location,
+        'bloodTestType': bloodTestType,
+        'urgency': urgency,
+      });
+
+      KDebugPrint.success('Request updated: $requestId');
+
+      if (context != null) {
+        CustomSnackBar.success(context, 'Request updated successfully');
+      }
+
+      // Refresh the list
+      await fetchTestRequests();
+
+      return true;
+    } catch (e) {
+      KDebugPrint.error('Error updating request: $e');
+      error = 'Failed to update request: $e';
+
+      if (context != null) {
+        CustomSnackBar.error(context, 'Failed to update request');
+      }
+
+      return false;
+    } finally {
+      isLoading = false;
+    }
+  }
+
   /// Update request status
   Future<bool> updateRequestStatus({
     required String requestId,

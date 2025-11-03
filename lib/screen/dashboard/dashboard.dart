@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:labtest/provider/navigatorprodiver.dart';
 import 'package:labtest/provider/test_request_provider.dart';
@@ -10,6 +11,8 @@ import 'package:labtest/screen/pending_screen/pending_screen.dart';
 import 'package:labtest/screen/test_requests/test_requests_screen.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
+import 'package:labtest/utils/k_debug_print.dart';
+import 'package:labtest/utils/route_names.dart';
 import 'package:labtest/widget/Myscaffold.dart';
 import 'package:labtest/widget/Navitem.dart';
 import 'package:labtest/widget/customTextfield.dart';
@@ -289,9 +292,26 @@ class BloodLabHomePage extends StatelessWidget {
             tablet: const EdgeInsets.all(12.0),
             desktop: const EdgeInsets.all(16.0),
           ),
-          child: Custombutton(
-            text: "Add New Request",
-            onTap: () => _showAddRequestDialog(context),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Custombutton(
+                text: "Add New Request",
+                onTap: () => _showAddRequestDialog(context),
+              ),
+              SizedBox(
+                width: ResponsiveHelper.getResponsiveValue(
+                  context,
+                  mobile: 8.0,
+                  tablet: 12.0,
+                  desktop: 16.0,
+                ),
+              ),
+              Custombutton(
+                text: "View Form",
+                onTap: () => _showViewFormDialog(context),
+              ),
+            ],
           ),
         ),
         Expanded(child: _buildCurrentScreen(provider)),
@@ -376,9 +396,8 @@ class BloodLabHomePage extends StatelessWidget {
                       Customtextfield(
                         controller: patientNameController,
                         hintText: "Patient Name",
-                        validator:
-                            (value) =>
-                                value!.isEmpty ? 'Enter patient name' : null,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Enter patient name' : null,
                       ),
                       SizedBox(
                         height: ResponsiveHelper.getResponsiveValue(
@@ -391,8 +410,8 @@ class BloodLabHomePage extends StatelessWidget {
                       Customtextfield(
                         controller: locationController,
                         hintText: "Location",
-                        validator:
-                            (value) => value!.isEmpty ? 'Enter location' : null,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Enter location' : null,
                       ),
                       SizedBox(
                         height: ResponsiveHelper.getResponsiveValue(
@@ -405,9 +424,8 @@ class BloodLabHomePage extends StatelessWidget {
                       Customtextfield(
                         controller: testTypeController,
                         hintText: "Blood Test Type",
-                        validator:
-                            (value) =>
-                                value!.isEmpty ? 'Enter test type' : null,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Enter test type' : null,
                       ),
                       SizedBox(
                         height: ResponsiveHelper.getResponsiveValue(
@@ -446,20 +464,19 @@ class BloodLabHomePage extends StatelessWidget {
                             fontFamily: 'uber',
                           ),
                         ),
-                        items:
-                            ['Normal', 'Urgent'].map((String value) {
-                              return DropdownMenuItem<String>(
-                                value: value,
-                                child: ResponsiveText(
-                                  value,
-                                  style: TextStyle(
-                                    fontFamily: 'uber',
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colors.textPrimary,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
+                        items: ['Normal', 'Urgent'].map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: ResponsiveText(
+                              value,
+                              style: TextStyle(
+                                fontFamily: 'uber',
+                                fontWeight: FontWeight.bold,
+                                color: theme.colors.textPrimary,
+                              ),
+                            ),
+                          );
+                        }).toList(),
                         onChanged: (newValue) {
                           urgency = newValue!;
                         },
@@ -478,33 +495,32 @@ class BloodLabHomePage extends StatelessWidget {
                             // Get the test request provider
                             final testRequestProvider =
                                 Provider.of<TestRequestProvider>(
-                                  context,
-                                  listen: false,
-                                );
+                              context,
+                              listen: false,
+                            );
 
                             // Close dialog first
                             Navigator.pop(context);
 
                             // Create test request
-                            final formLink = await testRequestProvider
-                                .createTestRequest(
-                                  patientName: patientNameController.text,
-                                  location: locationController.text,
-                                  bloodTestType: testTypeController.text,
-                                  urgency: urgency,
-                                  context: context,
-                                );
+                            final formLink =
+                                await testRequestProvider.createTestRequest(
+                              patientName: patientNameController.text,
+                              location: locationController.text,
+                              bloodTestType: testTypeController.text,
+                              urgency: urgency,
+                              context: context,
+                            );
 
                             // Show link share dialog if successful
                             if (formLink != null) {
                               await showDialog(
                                 context: context,
-                                builder:
-                                    (context) => LinkShareDialog(
-                                      formLink: formLink,
-                                      patientName: patientNameController.text,
-                                      testType: testTypeController.text,
-                                    ),
+                                builder: (context) => LinkShareDialog(
+                                  formLink: formLink,
+                                  patientName: patientNameController.text,
+                                  testType: testTypeController.text,
+                                ),
                               );
                             }
 
@@ -515,6 +531,99 @@ class BloodLabHomePage extends StatelessWidget {
                           }
                         },
                         text: 'Send Request',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showViewFormDialog(BuildContext context) {
+    final _formLinkController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Consumer<AppTheme>(
+          builder: (context, theme, child) {
+            return AlertDialog(
+              backgroundColor: theme.colors.surface,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ResponsiveText(
+                    "View Form",
+                    style: TextStyle(
+                      fontFamily: 'uber',
+                      fontSize: ResponsiveHelper.getResponsiveFontSize(
+                        context,
+                        mobile: 14,
+                        tablet: 16,
+                        desktop: 18,
+                      ),
+                      color: theme.colors.textPrimary,
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(
+                      Iconsax.close_square,
+                      color: theme.colors.textPrimary,
+                      size: ResponsiveHelper.getResponsiveValue(
+                        context,
+                        mobile: 24,
+                        tablet: 28,
+                        desktop: 30,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: Form(
+                child: SizedBox(
+                  width: ResponsiveHelper.getResponsiveValue(
+                    context,
+                    mobile: 280,
+                    tablet: 320,
+                    desktop: 360,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Customtextfield(
+                        controller: _formLinkController,
+                        hintText: "Enter Form Link ID",
+                        labelText: "Form Link ID",
+                        validator: (value) =>
+                            value!.isEmpty ? 'Enter form link ID' : null,
+                      ),
+                      SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                          context,
+                          mobile: 16,
+                          tablet: 20,
+                          desktop: 24,
+                        ),
+                      ),
+                      Custombutton(
+                        onTap: () {
+                          KDebugPrint.info(
+                              'Form link controller text: ${_formLinkController.text}',
+                              tag: 'View Form Dialog');
+                          if (_formLinkController.text.isNotEmpty) {
+                            Navigator.pop(context);
+                            context.pushNamed(RouteNames.clientForm,
+                                pathParameters: {
+                                  'formLinkId': _formLinkController.text
+                                });
+                          }
+                        },
+                        text: 'View Form',
                       ),
                     ],
                   ),

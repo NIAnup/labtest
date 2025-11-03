@@ -11,6 +11,7 @@ class TestRequestCard extends StatelessWidget {
   final TestRequest request;
   final VoidCallback? onViewDetails;
   final VoidCallback? onUpdateStatus;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final bool showActions;
 
@@ -19,6 +20,7 @@ class TestRequestCard extends StatelessWidget {
     required this.request,
     this.onViewDetails,
     this.onUpdateStatus,
+    this.onEdit,
     this.onDelete,
     this.showActions = true,
   }) : super(key: key);
@@ -42,10 +44,7 @@ class TestRequestCard extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  colors.surface,
-                  colors.surface.withOpacity(0.8),
-                ],
+                colors: [colors.surface, colors.surface.withOpacity(0.8)],
               ),
             ),
             child: Padding(
@@ -60,7 +59,10 @@ class TestRequestCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(request.status, colors).withOpacity(0.2),
+                          color: _getStatusColor(
+                            request.status,
+                            colors,
+                          ).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Icon(
@@ -77,7 +79,8 @@ class TestRequestCard extends StatelessWidget {
                             Text(
                               request.patientName,
                               style: TextStyle(
-                                fontSize: ResponsiveHelper.getResponsiveFontSize(
+                                fontSize:
+                                    ResponsiveHelper.getResponsiveFontSize(
                                   context,
                                   mobile: 18,
                                   tablet: 20,
@@ -116,16 +119,16 @@ class TestRequestCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
+
                   // Test type
                   _buildInfoRow(
-                    icon: Iconsax.medical_bag,
+                    icon: Iconsax.bag_2,
                     label: 'Test Type',
                     value: request.bloodTestType,
                     colors: colors,
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Location
                   _buildInfoRow(
                     icon: Iconsax.location,
@@ -134,7 +137,7 @@ class TestRequestCard extends StatelessWidget {
                     colors: colors,
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Urgency
                   _buildInfoRow(
                     icon: Iconsax.warning_2,
@@ -144,7 +147,7 @@ class TestRequestCard extends StatelessWidget {
                     valueColor: _getUrgencyColor(request.urgency, colors),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Created date
                   _buildInfoRow(
                     icon: Iconsax.calendar,
@@ -152,7 +155,7 @@ class TestRequestCard extends StatelessWidget {
                     value: _formatDate(request.createdAt),
                     colors: colors,
                   ),
-                  
+
                   // Show submission info if submitted
                   if (request.isSubmitted) ...[
                     const SizedBox(height: 8),
@@ -164,7 +167,7 @@ class TestRequestCard extends StatelessWidget {
                       valueColor: colors.success,
                     ),
                   ],
-                  
+
                   // Actions
                   if (showActions) ...[
                     const SizedBox(height: 16),
@@ -177,6 +180,13 @@ class TestRequestCard extends StatelessWidget {
                             label: "View",
                             color: colors.info,
                             onPressed: onViewDetails!,
+                          ),
+                        if (onEdit != null && request.status == 'New')
+                          _buildActionButton(
+                            icon: Iconsax.edit,
+                            label: "Edit",
+                            color: colors.warning,
+                            onPressed: onEdit!,
                           ),
                         if (onUpdateStatus != null && request.status == 'New')
                           _buildActionButton(
@@ -213,11 +223,7 @@ class TestRequestCard extends StatelessWidget {
   }) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: colors.primary,
-        ),
+        Icon(icon, size: 16, color: colors.primary),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -316,4 +322,3 @@ class TestRequestCard extends StatelessWidget {
     return '${date.day}/${date.month}/${date.year}';
   }
 }
-
