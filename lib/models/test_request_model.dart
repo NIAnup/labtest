@@ -12,21 +12,23 @@ class TestRequest {
   final DateTime createdAt;
   final DateTime? submittedAt;
   final String? submittedBy;
-  final String? labId;
+  final String? labId; // Lab user who created this form
+  final DateTime? expiresAt; // Form expiration time (1 hour after creation)
   final Map<String, dynamic>? clientSubmission; // Client's filled data
 
   TestRequest({
     this.id,
-    required this.patientName,
-    required this.location,
-    required this.bloodTestType,
-    required this.urgency,
+    this.patientName = '',
+    this.location = '',
+    this.bloodTestType = '',
+    this.urgency = 'Normal',
     this.status = 'New',
     required this.formLinkId,
     required this.createdAt,
     this.submittedAt,
     this.submittedBy,
     this.labId,
+    this.expiresAt,
     this.clientSubmission,
   });
 
@@ -44,6 +46,7 @@ class TestRequest {
           submittedAt != null ? Timestamp.fromDate(submittedAt!) : null,
       'submittedBy': submittedBy,
       'labId': labId,
+      'expiresAt': expiresAt != null ? Timestamp.fromDate(expiresAt!) : null,
       'clientSubmission': clientSubmission,
     };
   }
@@ -63,6 +66,7 @@ class TestRequest {
       submittedAt: (data['submittedAt'] as Timestamp?)?.toDate(),
       submittedBy: data['submittedBy'],
       labId: data['labId'],
+      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
       clientSubmission: data['clientSubmission'],
     );
   }
@@ -76,6 +80,7 @@ class TestRequest {
     String? status,
     DateTime? submittedAt,
     String? submittedBy,
+    DateTime? expiresAt,
     Map<String, dynamic>? clientSubmission,
   }) {
     return TestRequest(
@@ -90,6 +95,7 @@ class TestRequest {
       submittedAt: submittedAt ?? this.submittedAt,
       submittedBy: submittedBy ?? this.submittedBy,
       labId: labId,
+      expiresAt: expiresAt ?? this.expiresAt,
       clientSubmission: clientSubmission ?? this.clientSubmission,
     );
   }
@@ -107,6 +113,27 @@ class TestRequest {
 
   // Check if form has been submitted
   bool get isSubmitted => submittedAt != null && clientSubmission != null;
+
+  // Check if form has expired (not submitted and expired)
+  bool get isExpired {
+    if (isSubmitted) return false; // Submitted forms don't expire
+    if (expiresAt == null) return false; // No expiration set
+    return DateTime.now().isAfter(expiresAt!);
+  }
+
+  // Check if form is close to expiring (within 10 minutes)
+  bool get isExpiringSoon {
+    if (isSubmitted || expiresAt == null) return false;
+    final timeUntilExpiry = expiresAt!.difference(DateTime.now());
+    return timeUntilExpiry.inMinutes <= 10 && timeUntilExpiry.inMinutes > 0;
+  }
+
+  // Get remaining time until expiration
+  Duration? get timeUntilExpiry {
+    if (isSubmitted || expiresAt == null) return null;
+    final diff = expiresAt!.difference(DateTime.now());
+    return diff.isNegative ? Duration.zero : diff;
+  }
 }
 
 /// Model for client form submission

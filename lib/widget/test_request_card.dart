@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:labtest/models/test_request_model.dart';
 import 'package:labtest/store/app_theme.dart';
-import 'package:labtest/responsive/responsive_layout.dart';
-import 'package:labtest/widget/custombutton.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -32,186 +30,364 @@ class TestRequestCard extends StatelessWidget {
 
     return Consumer<AppTheme>(
       builder: (context, theme, child) {
-        return Card(
-          elevation: 8,
-          shadowColor: colors.shadow,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [colors.surface, colors.surface.withOpacity(0.8)],
-              ),
+        return Container(
+          margin: EdgeInsets.only(
+            top: ResponsiveHelper.getResponsiveValue(
+              context,
+              mobile: 10,
+              tablet: 10,
+              desktop: 10,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Header with patient name and status
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(
-                            request.status,
-                            colors,
-                          ).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.person,
-                          color: _getStatusColor(request.status, colors),
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              request.patientName,
-                              style: TextStyle(
-                                fontSize:
-                                    ResponsiveHelper.getResponsiveFontSize(
-                                  context,
-                                  mobile: 18,
-                                  tablet: 20,
-                                  desktop: 22,
-                                ),
-                                fontWeight: FontWeight.bold,
-                                color: colors.textPrimary,
-                                fontFamily: "uber",
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _getStatusColor(request.status, colors),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                request.status,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontFamily: "uber",
-                                ),
-                              ),
-                            ),
-                          ],
+          ),
+          padding: EdgeInsets.only(
+            top: ResponsiveHelper.getResponsiveValue(
+              context,
+              mobile: 10,
+              tablet: 10,
+              desktop: 10,
+            ),
+          ),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [colors.surface, colors.surface.withOpacity(0.8)],
+            ),
+          ),
+          child: Padding(
+            padding: ResponsiveHelper.getResponsivePadding(
+              context,
+              mobile: const EdgeInsets.all(12),
+              tablet: const EdgeInsets.all(10),
+              desktop: const EdgeInsets.all(20),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header with patient name and status
+                Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(
+                        ResponsiveHelper.getResponsiveValue(
+                          context,
+                          mobile: 8,
+                          tablet: 8,
+                          desktop: 12,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Test type
-                  _buildInfoRow(
-                    icon: Iconsax.bag_2,
-                    label: 'Test Type',
-                    value: request.bloodTestType,
-                    colors: colors,
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Location
-                  _buildInfoRow(
-                    icon: Iconsax.location,
-                    label: 'Location',
-                    value: request.location,
-                    colors: colors,
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Urgency
-                  _buildInfoRow(
-                    icon: Iconsax.warning_2,
-                    label: 'Urgency',
-                    value: request.urgency,
-                    colors: colors,
-                    valueColor: _getUrgencyColor(request.urgency, colors),
-                  ),
-                  const SizedBox(height: 8),
-
-                  // Created date
-                  _buildInfoRow(
-                    icon: Iconsax.calendar,
-                    label: 'Created',
-                    value: _formatDate(request.createdAt),
-                    colors: colors,
-                  ),
-
-                  // Show submission info if submitted
-                  if (request.isSubmitted) ...[
-                    const SizedBox(height: 8),
-                    _buildInfoRow(
-                      icon: Iconsax.tick_circle,
-                      label: 'Submitted',
-                      value: _formatDate(request.submittedAt!),
-                      colors: colors,
-                      valueColor: colors.success,
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(
+                          request.status,
+                          colors,
+                        ).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.person,
+                        color: _getStatusColor(request.status, colors),
+                        size: ResponsiveHelper.getResponsiveValue(
+                          context,
+                          mobile: 18,
+                          tablet: 20,
+                          desktop: 28,
+                        ),
+                      ),
                     ),
-                  ],
-
-                  // Actions
-                  if (showActions) ...[
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    SizedBox(
+                      width: ResponsiveHelper.getResponsiveValue(
+                        context,
+                        mobile: 8,
+                        tablet: 8,
+                        desktop: 12,
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (onViewDetails != null)
-                          _buildActionButton(
-                            icon: Iconsax.eye,
-                            label: "View",
-                            color: colors.info,
-                            onPressed: onViewDetails!,
+                        Flexible(
+                          child: Text(
+                            request.patientName.isNotEmpty
+                                ? request.patientName
+                                : 'Form ${request.formLinkId.length > 8 ? request.formLinkId.substring(0, 8) + "..." : request.formLinkId}',
+                            style: TextStyle(
+                              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                                context,
+                                mobile: 13,
+                                tablet: 14,
+                                desktop: 18,
+                              ),
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                              fontFamily: "uber",
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        if (onEdit != null && request.status == 'New')
-                          _buildActionButton(
-                            icon: Iconsax.edit,
-                            label: "Edit",
-                            color: colors.warning,
-                            onPressed: onEdit!,
+                        ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 2,
+                            tablet: 3,
+                            desktop: 4,
                           ),
-                        if (onUpdateStatus != null && request.status == 'New')
-                          _buildActionButton(
-                            icon: Iconsax.tick_square,
-                            label: "Accept",
-                            color: colors.success,
-                            onPressed: onUpdateStatus!,
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: ResponsiveHelper.getResponsiveValue(
+                              context,
+                              mobile: 6,
+                              tablet: 6,
+                              desktop: 8,
+                            ),
+                            vertical: ResponsiveHelper.getResponsiveValue(
+                              context,
+                              mobile: 2,
+                              tablet: 3,
+                              desktop: 4,
+                            ),
                           ),
-                        if (onDelete != null && request.status == 'New')
-                          _buildActionButton(
-                            icon: Iconsax.trash,
-                            label: "Delete",
-                            color: colors.error,
-                            onPressed: onDelete!,
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(request.status, colors),
+                            borderRadius: BorderRadius.circular(8),
                           ),
+                          child: Text(
+                            request.status,
+                            style: TextStyle(
+                              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                                context,
+                                mobile: 9,
+                                tablet: 10,
+                                desktop: 12,
+                              ),
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: "uber",
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ],
                     ),
                   ],
+                ),
+                SizedBox(
+                  height: ResponsiveHelper.getResponsiveValue(
+                    context,
+                    mobile: 6,
+                    tablet: 6,
+                    desktop: 12,
+                  ),
+                ),
+
+                // Test type
+                _buildInfoRow(
+                  icon: Iconsax.bag_2,
+                  label: 'Test Type',
+                  value: request.bloodTestType.isNotEmpty
+                      ? request.bloodTestType
+                      : 'Not specified',
+                  colors: colors,
+                  context: context,
+                ),
+                SizedBox(
+                  height: ResponsiveHelper.getResponsiveValue(
+                    context,
+                    mobile: 3,
+                    tablet: 4,
+                    desktop: 6,
+                  ),
+                ),
+
+                // Location
+                _buildInfoRow(
+                  icon: Iconsax.location,
+                  label: 'Location',
+                  value: request.location.isNotEmpty
+                      ? request.location
+                      : 'Not specified',
+                  colors: colors,
+                  context: context,
+                ),
+                SizedBox(
+                  height: ResponsiveHelper.getResponsiveValue(
+                    context,
+                    mobile: 3,
+                    tablet: 4,
+                    desktop: 6,
+                  ),
+                ),
+
+                // Urgency
+                _buildInfoRow(
+                  icon: Iconsax.warning_2,
+                  label: 'Urgency',
+                  value: request.urgency,
+                  colors: colors,
+                  valueColor: _getUrgencyColor(request.urgency, colors),
+                  context: context,
+                ),
+                SizedBox(
+                  height: ResponsiveHelper.getResponsiveValue(
+                    context,
+                    mobile: 3,
+                    tablet: 4,
+                    desktop: 6,
+                  ),
+                ),
+
+                // Created date
+                _buildInfoRow(
+                  icon: Iconsax.calendar,
+                  label: 'Created',
+                  value: _formatDate(request.createdAt),
+                  colors: colors,
+                  context: context,
+                ),
+
+                // Show submission info if submitted
+                if (request.isSubmitted) ...[
+                  SizedBox(
+                    height: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: 3,
+                      tablet: 4,
+                      desktop: 6,
+                    ),
+                  ),
+                  _buildInfoRow(
+                    icon: Iconsax.tick_circle,
+                    label: 'Submitted',
+                    value: _formatDate(request.submittedAt!),
+                    colors: colors,
+                    valueColor: colors.success,
+                    context: context,
+                  ),
                 ],
-              ),
+
+                // Actions
+                if (showActions) ...[
+                  SizedBox(
+                    height: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: 6,
+                      tablet: 6,
+                      desktop: 12,
+                    ),
+                  ),
+                  ResponsiveHelper.isMobile(context) ||
+                          ResponsiveHelper.isTablet(context)
+                      ? Wrap(
+                          spacing: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 4,
+                            tablet: 4,
+                            desktop: 8,
+                          ),
+                          runSpacing: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 4,
+                            tablet: 4,
+                            desktop: 8,
+                          ),
+                          alignment: WrapAlignment.spaceEvenly,
+                          children: _buildActionButtons(context, colors),
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: _buildActionButtons(context, colors),
+                        ),
+                ],
+              ],
             ),
           ),
         );
       },
     );
+  }
+
+  List<Widget> _buildActionButtons(BuildContext context, AppColors colors) {
+    final isMobileOrTablet = ResponsiveHelper.isMobile(context) ||
+        ResponsiveHelper.isTablet(context);
+    return [
+      if (onViewDetails != null)
+        isMobileOrTablet
+            ? _buildActionButton(
+                icon: Iconsax.eye,
+                label: "View",
+                color: colors.info,
+                onPressed: onViewDetails!,
+                context: context,
+              )
+            : Expanded(
+                child: _buildActionButton(
+                  icon: Iconsax.eye,
+                  label: "View",
+                  color: colors.info,
+                  onPressed: onViewDetails!,
+                  context: context,
+                ),
+              ),
+      if (onEdit != null && request.status == 'New')
+        isMobileOrTablet
+            ? _buildActionButton(
+                icon: Iconsax.edit,
+                label: "Edit",
+                color: colors.warning,
+                onPressed: onEdit!,
+                context: context,
+              )
+            : Expanded(
+                child: _buildActionButton(
+                  icon: Iconsax.edit,
+                  label: "Edit",
+                  color: colors.warning,
+                  onPressed: onEdit!,
+                  context: context,
+                ),
+              ),
+      if (onUpdateStatus != null && request.status == 'New')
+        isMobileOrTablet
+            ? _buildActionButton(
+                icon: Iconsax.tick_square,
+                label: "Accept",
+                color: colors.success,
+                onPressed: onUpdateStatus!,
+                context: context,
+              )
+            : Expanded(
+                child: _buildActionButton(
+                  icon: Iconsax.tick_square,
+                  label: "Accept",
+                  color: colors.success,
+                  onPressed: onUpdateStatus!,
+                  context: context,
+                ),
+              ),
+      if (onDelete != null && request.status == 'New')
+        isMobileOrTablet
+            ? _buildActionButton(
+                icon: Iconsax.trash,
+                label: "Delete",
+                color: colors.error,
+                onPressed: onDelete!,
+                context: context,
+              )
+            : Expanded(
+                child: _buildActionButton(
+                  icon: Iconsax.trash,
+                  label: "Delete",
+                  color: colors.error,
+                  onPressed: onDelete!,
+                  context: context,
+                ),
+              ),
+    ];
   }
 
   Widget _buildInfoRow({
@@ -220,27 +396,66 @@ class TestRequestCard extends StatelessWidget {
     required String value,
     required AppColors colors,
     Color? valueColor,
+    required BuildContext context,
   }) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 16, color: colors.primary),
-        const SizedBox(width: 8),
+        Icon(
+          icon,
+          size: ResponsiveHelper.getResponsiveValue(
+            context,
+            mobile: 12,
+            tablet: 13,
+            desktop: 16,
+          ),
+          color: colors.primary,
+        ),
+        SizedBox(
+          width: ResponsiveHelper.getResponsiveValue(
+            context,
+            mobile: 6,
+            tablet: 6,
+            desktop: 8,
+          ),
+        ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: ResponsiveHelper.getResponsiveFontSize(
+                    context,
+                    mobile: 9,
+                    tablet: 10,
+                    desktop: 12,
+                  ),
                   color: colors.textSecondary,
                   fontFamily: "uber",
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(
+                height: ResponsiveHelper.getResponsiveValue(
+                  context,
+                  mobile: 1,
+                  tablet: 1,
+                  desktop: 3,
                 ),
               ),
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: ResponsiveHelper.getResponsiveFontSize(
+                    context,
+                    mobile: 9,
+                    tablet: 10,
+                    desktop: 12,
+                  ),
                   color: valueColor ?? colors.textPrimary,
                   fontWeight: FontWeight.w600,
                   fontFamily: "uber",
@@ -260,29 +475,76 @@ class TestRequestCard extends StatelessWidget {
     required String label,
     required Color color,
     required VoidCallback onPressed,
+    required BuildContext context,
   }) {
     return InkWell(
       onTap: onPressed,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        constraints: BoxConstraints(
+          minWidth: ResponsiveHelper.isMobile(context)
+              ? 55
+              : ResponsiveHelper.isTablet(context)
+                  ? 60
+                  : 70,
+          maxWidth: ResponsiveHelper.isTablet(context) ? 100 : double.infinity,
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: ResponsiveHelper.getResponsiveValue(
+            context,
+            mobile: 5,
+            tablet: 5,
+            desktop: 10,
+          ),
+          vertical: ResponsiveHelper.getResponsiveValue(
+            context,
+            mobile: 3,
+            tablet: 3,
+            desktop: 6,
+          ),
+        ),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(height: 4),
+            Icon(
+              icon,
+              color: color,
+              size: ResponsiveHelper.getResponsiveValue(
+                context,
+                mobile: 13,
+                tablet: 14,
+                desktop: 18,
+              ),
+            ),
+            SizedBox(
+              height: ResponsiveHelper.getResponsiveValue(
+                context,
+                mobile: 2,
+                tablet: 2,
+                desktop: 3,
+              ),
+            ),
             Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: ResponsiveHelper.getResponsiveFontSize(
+                  context,
+                  mobile: 8,
+                  tablet: 8,
+                  desktop: 11,
+                ),
                 color: color,
                 fontWeight: FontWeight.w600,
                 fontFamily: "uber",
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

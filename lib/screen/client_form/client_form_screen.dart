@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:labtest/models/test_request_model.dart';
 import 'package:labtest/provider/test_request_provider.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:labtest/store/app_theme.dart';
-import 'package:labtest/utils/custom_snackbar.dart';
 import 'package:labtest/widget/customTextfield.dart';
 import 'package:labtest/widget/custombutton.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +14,7 @@ class ClientFormScreen extends StatefulWidget {
   final String formLinkId;
 
   const ClientFormScreen({Key? key, required this.formLinkId})
-    : super(key: key);
+      : super(key: key);
 
   @override
   State<ClientFormScreen> createState() => _ClientFormScreenState();
@@ -112,14 +112,142 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
                 elevation: 0,
               ),
               backgroundColor: theme.colors.background,
-              body:
-                  testRequestProvider.isFormAlreadySubmitted
-                      ? _buildAlreadySubmittedView(theme)
-                      : _buildFormView(theme, testRequestProvider),
+              body: _buildBody(theme, testRequestProvider),
             );
           },
         );
       },
+    );
+  }
+
+  Widget _buildBody(AppTheme theme, TestRequestProvider testRequestProvider) {
+    final currentRequest = testRequestProvider.currentFormRequest;
+
+    // Show loading while fetching form
+    if (testRequestProvider.isLoading && currentRequest == null) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: theme.colors.primary,
+        ),
+      );
+    }
+
+    // Show error view if form doesn't exist
+    if (currentRequest == null) {
+      return _buildInvalidFormView(theme);
+    }
+
+    // Show expired view ONLY if form exists and is expired (after 1 hour)
+    if (currentRequest.isExpired) {
+      return _buildExpiredView(theme);
+    }
+
+    // Show already submitted view
+    if (testRequestProvider.isFormAlreadySubmitted) {
+      return _buildAlreadySubmittedView(theme);
+    }
+
+    // Show form view (with expiration warning if needed)
+    // This shows the EMPTY form fields where client can add details
+    return _buildFormView(theme, testRequestProvider);
+  }
+
+  Widget _buildInvalidFormView(AppTheme theme) {
+    final colors = theme.colors;
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: colors.textSecondary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Iconsax.close_circle,
+                size: 64, color: colors.textSecondary),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Form Not Found',
+            style: TextStyle(
+              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                context,
+                mobile: 24,
+                tablet: 26,
+                desktop: 28,
+              ),
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+              fontFamily: 'uber',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This form link is invalid.\nPlease check the link and try again.',
+            style: TextStyle(
+              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                context,
+                mobile: 14,
+                tablet: 16,
+                desktop: 18,
+              ),
+              color: colors.textSecondary,
+              fontFamily: 'uber',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpiredView(AppTheme theme) {
+    final colors = theme.colors;
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: colors.error.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Iconsax.timer, size: 64, color: colors.error),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Form Expired',
+            style: TextStyle(
+              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                context,
+                mobile: 24,
+                tablet: 26,
+                desktop: 28,
+              ),
+              fontWeight: FontWeight.bold,
+              color: colors.textPrimary,
+              fontFamily: 'uber',
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This form link has expired.\nPlease request a new form link from your lab.',
+            style: TextStyle(
+              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                context,
+                mobile: 14,
+                tablet: 16,
+                desktop: 18,
+              ),
+              color: colors.textSecondary,
+              fontFamily: 'uber',
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -254,6 +382,12 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
               ),
               const SizedBox(height: 32),
 
+              // Expiration warning (if form is expiring soon)
+              if (testRequestProvider.currentFormRequest?.isExpiringSoon ??
+                  false)
+                _buildExpirationWarning(
+                    theme, testRequestProvider.currentFormRequest!),
+
               // Form
               Form(
                 key: _formKey,
@@ -366,20 +500,19 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
                         fillColor: colors.surface,
                       ),
                       value: testRequestProvider.formUrgency,
-                      items:
-                          ['Normal', 'Urgent'].map((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(
-                                value,
-                                style: TextStyle(
-                                  fontFamily: 'uber',
-                                  fontWeight: FontWeight.bold,
-                                  color: colors.textPrimary,
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                      items: ['Normal', 'Urgent'].map((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(
+                            value,
+                            style: TextStyle(
+                              fontFamily: 'uber',
+                              fontWeight: FontWeight.bold,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                       onChanged: (newValue) {
                         if (newValue != null) {
                           testRequestProvider.setFormUrgency(newValue);
@@ -396,10 +529,9 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
                     ),
                     Custombutton(
                       onTap: testRequestProvider.isLoading ? null : _submitForm,
-                      text:
-                          testRequestProvider.isLoading
-                              ? 'Submitting...'
-                              : 'Submit Request',
+                      text: testRequestProvider.isLoading
+                          ? 'Submitting...'
+                          : 'Submit Request',
                       width: double.infinity,
                     ),
                   ],
@@ -408,6 +540,74 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildExpirationWarning(AppTheme theme, TestRequest request) {
+    final colors = theme.colors;
+    final timeRemaining = request.timeUntilExpiry;
+
+    if (timeRemaining == null) return const SizedBox.shrink();
+
+    final minutes = timeRemaining.inMinutes;
+    final seconds = timeRemaining.inSeconds % 60;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colors.warning.withOpacity(0.1),
+        border: Border.all(
+          color: colors.warning.withOpacity(0.3),
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Iconsax.info_circle,
+            color: colors.warning,
+            size: 24,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Form Expiring Soon',
+                  style: TextStyle(
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(
+                      context,
+                      mobile: 14,
+                      tablet: 15,
+                      desktop: 16,
+                    ),
+                    fontWeight: FontWeight.bold,
+                    color: colors.warning,
+                    fontFamily: 'uber',
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Please submit within ${minutes}m ${seconds}s',
+                  style: TextStyle(
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(
+                      context,
+                      mobile: 12,
+                      tablet: 13,
+                      desktop: 14,
+                    ),
+                    color: colors.textSecondary,
+                    fontFamily: 'uber',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -299,6 +299,18 @@ class BloodLabHomePage extends StatelessWidget {
                 text: "Add New Request",
                 onTap: () => _showAddRequestDialog(context),
               ),
+              // SizedBox(
+              //   width: ResponsiveHelper.getResponsiveValue(
+              //     context,
+              //     mobile: 8.0,
+              //     tablet: 12.0,
+              //     desktop: 16.0,
+              //   ),
+              // ),
+              // Custombutton(
+              //   text: "View Form",
+              //   onTap: () => _showViewFormDialog(context),
+              // ),
               SizedBox(
                 width: ResponsiveHelper.getResponsiveValue(
                   context,
@@ -308,8 +320,8 @@ class BloodLabHomePage extends StatelessWidget {
                 ),
               ),
               Custombutton(
-                text: "View Form",
-                onTap: () => _showViewFormDialog(context),
+                text: "Client Form",
+                onTap: () => _showClientFormDialog(context),
               ),
             ],
           ),
@@ -354,7 +366,7 @@ class BloodLabHomePage extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ResponsiveText(
-                    "Create Test Request",
+                    "Add Collection Request",
                     style: TextStyle(
                       fontFamily: 'uber',
                       fontSize: ResponsiveHelper.getResponsiveFontSize(
@@ -378,7 +390,7 @@ class BloodLabHomePage extends StatelessWidget {
                         desktop: 30,
                       ),
                     ),
-                  ),
+                  )
                 ],
               ),
               content: Form(
@@ -390,82 +402,64 @@ class BloodLabHomePage extends StatelessWidget {
                     tablet: 320,
                     desktop: 360,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Customtextfield(
-                        controller: patientNameController,
-                        hintText: "Patient Name",
-                        validator: (value) =>
-                            value!.isEmpty ? 'Enter patient name' : null,
-                      ),
-                      SizedBox(
+                  child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    Customtextfield(
+                      controller: patientNameController,
+                      hintText: "Patient Name",
+                      validator: (value) =>
+                          value!.isEmpty ? 'Enter patient name' : null,
+                    ),
+                    SizedBox(
                         height: ResponsiveHelper.getResponsiveValue(
-                          context,
-                          mobile: 12,
-                          tablet: 16,
-                          desktop: 20,
-                        ),
-                      ),
-                      Customtextfield(
-                        controller: locationController,
-                        hintText: "Location",
-                        validator: (value) =>
-                            value!.isEmpty ? 'Enter location' : null,
-                      ),
-                      SizedBox(
+                      context,
+                      mobile: 12,
+                      tablet: 16,
+                      desktop: 20,
+                    )),
+                    Customtextfield(
+                      controller: testTypeController,
+                      hintText: "Test Type",
+                      validator: (value) =>
+                          value!.isEmpty ? 'Enter test type' : null,
+                    ),
+                    SizedBox(
                         height: ResponsiveHelper.getResponsiveValue(
-                          context,
-                          mobile: 12,
-                          tablet: 16,
-                          desktop: 20,
+                      context,
+                      mobile: 12,
+                      tablet: 16,
+                      desktop: 20,
+                    )),
+                    DropdownButtonFormField<String>(
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: theme.colors.border,
+                            width: 2.0,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: theme.colors.primary,
+                            width: 2.0,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: theme.colors.border,
+                            width: 2.0,
+                          ),
                         ),
                       ),
-                      Customtextfield(
-                        controller: testTypeController,
-                        hintText: "Blood Test Type",
-                        validator: (value) =>
-                            value!.isEmpty ? 'Enter test type' : null,
-                      ),
-                      SizedBox(
-                        height: ResponsiveHelper.getResponsiveValue(
-                          context,
-                          mobile: 12,
-                          tablet: 16,
-                          desktop: 20,
+                      value: urgency,
+                      hint: ResponsiveText(
+                        "Urgency",
+                        style: TextStyle(
+                          color: theme.colors.textSecondary,
+                          fontFamily: 'uber',
                         ),
                       ),
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colors.border,
-                              width: 2.0,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colors.primary,
-                              width: 2.0,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colors.border,
-                              width: 2.0,
-                            ),
-                          ),
-                        ),
-                        value: urgency,
-                        hint: ResponsiveText(
-                          "Urgency",
-                          style: TextStyle(
-                            color: theme.colors.textSecondary,
-                            fontFamily: 'uber',
-                          ),
-                        ),
-                        items: ['Normal', 'Urgent'].map((String value) {
-                          return DropdownMenuItem<String>(
+                      items: ['Normal', 'Urgent'].map((String value) {
+                        return DropdownMenuItem<String>(
                             value: value,
                             child: ResponsiveText(
                               value,
@@ -474,66 +468,42 @@ class BloodLabHomePage extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                                 color: theme.colors.textPrimary,
                               ),
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (newValue) {
-                          urgency = newValue!;
-                        },
-                      ),
-                      SizedBox(
+                            ));
+                      }).toList(),
+                      onChanged: (newValue) {
+                        urgency = newValue!;
+                      },
+                    ),
+                    SizedBox(
                         height: ResponsiveHelper.getResponsiveValue(
-                          context,
-                          mobile: 12,
-                          tablet: 16,
-                          desktop: 20,
-                        ),
-                      ),
-                      Custombutton(
-                        onTap: () async {
-                          if (_formKey.currentState!.validate()) {
-                            // Get the test request provider
-                            final testRequestProvider =
-                                Provider.of<TestRequestProvider>(
-                              context,
-                              listen: false,
-                            );
-
-                            // Close dialog first
-                            Navigator.pop(context);
-
-                            // Create test request
-                            final formLink =
-                                await testRequestProvider.createTestRequest(
-                              patientName: patientNameController.text,
-                              location: locationController.text,
-                              bloodTestType: testTypeController.text,
-                              urgency: urgency,
-                              context: context,
-                            );
-
-                            // Show link share dialog if successful
-                            if (formLink != null) {
-                              await showDialog(
-                                context: context,
-                                builder: (context) => LinkShareDialog(
-                                  formLink: formLink,
-                                  patientName: patientNameController.text,
-                                  testType: testTypeController.text,
-                                ),
-                              );
-                            }
-
-                            // Clear controllers
-                            patientNameController.clear();
-                            locationController.clear();
-                            testTypeController.clear();
-                          }
-                        },
-                        text: 'Send Request',
-                      ),
-                    ],
-                  ),
+                      context,
+                      mobile: 12,
+                      tablet: 16,
+                      desktop: 20,
+                    )),
+                    Customtextfield(
+                      controller: locationController,
+                      hintText: "Location",
+                      validator: (value) =>
+                          value!.isEmpty ? 'Enter location' : null,
+                    ),
+                    SizedBox(
+                        height: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: 12,
+                      tablet: 16,
+                      desktop: 20,
+                    )),
+                    Custombutton(
+                      onTap: () {
+                        if (_formKey.currentState!.validate()) {
+                          // Handle form submission (e.g., save to database)
+                          Navigator.pop(context);
+                        }
+                      },
+                      text: 'Add Request',
+                    ),
+                  ]),
                 ),
               ),
             );
@@ -617,7 +587,7 @@ class BloodLabHomePage extends StatelessWidget {
                               tag: 'View Form Dialog');
                           if (_formLinkController.text.isNotEmpty) {
                             Navigator.pop(context);
-                            context.pushNamed(RouteNames.clientForm,
+                            context.pushReplacementNamed(RouteNames.clientForm,
                                 pathParameters: {
                                   'formLinkId': _formLinkController.text
                                 });
@@ -634,5 +604,34 @@ class BloodLabHomePage extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _showClientFormDialog(BuildContext context) async {
+    // Get the test request provider
+    final testRequestProvider = Provider.of<TestRequestProvider>(
+      context,
+      listen: false,
+    );
+
+    // Create empty form (no patient details required)
+    final formLink = await testRequestProvider.createTestRequest(
+      patientName: '',
+      location: '',
+      bloodTestType: '',
+      urgency: 'Normal',
+      context: context,
+    );
+
+    // Show link share dialog if successful
+    if (formLink != null && context.mounted) {
+      await showDialog(
+        context: context,
+        builder: (context) => LinkShareDialog(
+          formLink: formLink,
+          patientName: 'Client',
+          testType: 'Blood Test',
+        ),
+      );
+    }
   }
 }

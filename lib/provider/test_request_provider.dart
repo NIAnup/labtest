@@ -44,11 +44,12 @@ class TestRequestProvider extends ChangeNotifier {
   }
 
   /// Create a new test request and generate form link
+  /// Patient details are optional - can create empty form for client to fill
   Future<String?> createTestRequest({
-    required String patientName,
-    required String location,
-    required String bloodTestType,
-    required String urgency,
+    String patientName = '',
+    String location = '',
+    String bloodTestType = '',
+    String urgency = 'Normal',
     String? labId,
     BuildContext? context,
   }) async {
@@ -59,6 +60,10 @@ class TestRequestProvider extends ChangeNotifier {
       // Generate unique form link ID
       final formLinkId = _generateUniqueId();
 
+      // Set expiration time to 1 hour from now
+      final now = DateTime.now();
+      final expiresAt = now.add(const Duration(hours: 1));
+
       final request = TestRequest(
         patientName: patientName,
         location: location,
@@ -66,8 +71,9 @@ class TestRequestProvider extends ChangeNotifier {
         urgency: urgency,
         status: 'New',
         formLinkId: formLinkId,
-        createdAt: DateTime.now(),
+        createdAt: now,
         labId: labId,
+        expiresAt: expiresAt,
       );
 
       // Save to Firestore
@@ -78,7 +84,7 @@ class TestRequestProvider extends ChangeNotifier {
       KDebugPrint.success('Test request created: ${docRef.id}');
 
       if (context != null) {
-        CustomSnackBar.success(context, 'Test request created successfully!');
+        CustomSnackBar.success(context, 'Form link created successfully!');
       }
 
       // Refresh the list
@@ -91,7 +97,7 @@ class TestRequestProvider extends ChangeNotifier {
       error = 'Failed to create test request: $e';
 
       if (context != null) {
-        CustomSnackBar.error(context, 'Failed to create test request');
+        CustomSnackBar.error(context, 'Failed to create form link');
       }
 
       return null;
@@ -101,6 +107,7 @@ class TestRequestProvider extends ChangeNotifier {
   }
 
   /// Fetch all test requests for a lab
+  /// Automatically filters out expired unsubmitted forms
   Future<void> fetchTestRequests({String? labId}) async {
     try {
       isLoading = true;
@@ -118,8 +125,36 @@ class TestRequestProvider extends ChangeNotifier {
 
       final snapshot = await query.get();
 
-      _testRequests =
+      // Filter out expired unsubmitted forms
+      final allRequests =
           snapshot.docs.map((doc) => TestRequest.fromFirestore(doc)).toList();
+
+      // Separate expired and valid requests
+      final validRequests = <TestRequest>[];
+      final expiredIds = <String>[];
+
+      for (var request in allRequests) {
+        if (request.isExpired && !request.isSubmitted) {
+          // Mark for deletion
+          if (request.id != null) {
+            expiredIds.add(request.id!);
+          }
+        } else {
+          validRequests.add(request);
+        }
+      }
+
+      // Delete expired forms in batch
+      if (expiredIds.isNotEmpty) {
+        final batch = _firestore.batch();
+        for (var id in expiredIds) {
+          batch.delete(_firestore.collection('test_requests').doc(id));
+        }
+        await batch.commit();
+        KDebugPrint.info('Deleted ${expiredIds.length} expired forms');
+      }
+
+      _testRequests = validRequests;
 
       KDebugPrint.info('Fetched ${_testRequests.length} test requests');
     } catch (e) {
@@ -130,15 +165,70 @@ class TestRequestProvider extends ChangeNotifier {
     }
   }
 
+  /// Check if form is expired (only checks expiration, doesn't delete immediately)
+  /// Returns true if form is expired and should be rejected
+  Future<bool> checkFormExpiration(TestRequest request) async {
+    // Only check expiration if form has expiresAt set
+    if (request.expiresAt == null) {
+      return false; // No expiration set, form is valid (for backward compatibility)
+    }
+
+    // Check if form is expired (current time is after expiration time)
+    // Form should be valid for 1 hour, then expire
+    if (request.isExpired && !request.isSubmitted) {
+      KDebugPrint.info('Form expired: ${request.formLinkId}');
+      // Don't delete here, let the fetch method handle cleanup
+      return true; // Form is expired
+    }
+    return false; // Form is not expired, still valid
+  }
+
+  /// Delete all expired unsubmitted forms
+  Future<int> deleteExpiredForms({String? labId}) async {
+    try {
+      Query query = _firestore.collection('test_requests');
+
+      // Filter by labId if provided
+      if (labId != null) {
+        query = query.where('labId', isEqualTo: labId);
+      }
+
+      final snapshot = await query.get();
+      int deletedCount = 0;
+
+      for (var doc in snapshot.docs) {
+        final request = TestRequest.fromFirestore(doc);
+
+        // Delete if expired and not submitted
+        if (request.isExpired && !request.isSubmitted) {
+          await doc.reference.delete();
+          deletedCount++;
+          KDebugPrint.info('Deleted expired form: ${request.formLinkId}');
+        }
+      }
+
+      if (deletedCount > 0) {
+        KDebugPrint.success('Deleted $deletedCount expired forms');
+        // Refresh the list
+        await fetchTestRequests(labId: labId);
+      }
+
+      return deletedCount;
+    } catch (e) {
+      KDebugPrint.error('Error deleting expired forms: $e');
+      return 0;
+    }
+  }
+
   /// Get test request by form link ID (for client form)
+  /// Returns null if form is expired or doesn't exist
   Future<TestRequest?> getRequestByFormLinkId(String formLinkId) async {
     try {
-      final snapshot =
-          await _firestore
-              .collection('test_requests')
-              .where('formLinkId', isEqualTo: formLinkId)
-              .limit(1)
-              .get();
+      final snapshot = await _firestore
+          .collection('test_requests')
+          .where('formLinkId', isEqualTo: formLinkId)
+          .limit(1)
+          .get();
 
       if (snapshot.docs.isEmpty) {
         KDebugPrint.warning('No request found with formLinkId: $formLinkId');
@@ -147,7 +237,17 @@ class TestRequestProvider extends ChangeNotifier {
         return null;
       }
 
-      _currentFormRequest = TestRequest.fromFirestore(snapshot.docs.first);
+      final request = TestRequest.fromFirestore(snapshot.docs.first);
+
+      // Check if form is expired
+      if (await checkFormExpiration(request)) {
+        KDebugPrint.warning('Form expired: $formLinkId');
+        _currentFormRequest = null;
+        notifyListeners();
+        return null;
+      }
+
+      _currentFormRequest = request;
       notifyListeners();
       return _currentFormRequest;
     } catch (e) {
@@ -189,7 +289,25 @@ class TestRequestProvider extends ChangeNotifier {
       final request = await getRequestByFormLinkId(formLinkId);
       if (request == null) {
         if (context != null) {
-          CustomSnackBar.error(context, 'Invalid form link');
+          CustomSnackBar.error(context, 'Invalid or expired form link');
+        }
+        return false;
+      }
+
+      // Check if form is expired
+      if (request.isExpired) {
+        if (context != null) {
+          CustomSnackBar.error(
+            context,
+            'This form has expired. Please request a new form link.',
+          );
+        }
+        // Delete expired form
+        if (request.id != null) {
+          await _firestore
+              .collection('test_requests')
+              .doc(request.id!)
+              .delete();
         }
         return false;
       }
