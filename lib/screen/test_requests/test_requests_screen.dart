@@ -9,6 +9,8 @@ import 'package:labtest/widget/custombutton.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
 
+import '../../utils/k_debug_print.dart';
+
 /// Screen to display all test requests
 class TestRequestsScreen extends StatefulWidget {
   @override
@@ -64,117 +66,233 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
       builder: (context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(
+              ResponsiveHelper.getResponsiveValue(
+                context,
+                mobile: 16,
+                tablet: 18,
+                desktop: 20,
+              ),
+            ),
           ),
           child: Container(
             constraints: BoxConstraints(
-              maxWidth: ResponsiveHelper.isMobile(context) ? 350 : 500,
+              maxWidth: ResponsiveHelper.getResponsiveValue(
+                context,
+                mobile: MediaQuery.of(context).size.width * 0.9,
+                tablet: 450,
+                desktop: 500,
+              ),
+              maxHeight: MediaQuery.of(context).size.height * 0.85,
             ),
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "Request Details",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                        fontFamily: "uber",
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: colors.textSecondary),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Patient info
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
+            padding: ResponsiveHelper.getResponsivePadding(
+              context,
+              mobile: const EdgeInsets.all(16),
+              tablet: const EdgeInsets.all(20),
+              desktop: const EdgeInsets.all(24),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.person, size: 64, color: colors.primary),
-                      const SizedBox(height: 16),
-                      Text(
-                        request.patientName,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: colors.textPrimary,
-                          fontFamily: "uber",
+                      Expanded(
+                        child: Text(
+                          "Request Details",
+                          style: TextStyle(
+                            fontSize: ResponsiveHelper.getResponsiveFontSize(
+                              context,
+                              mobile: 20,
+                              tablet: 22,
+                              desktop: 24,
+                            ),
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                            fontFamily: "uber",
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _getStatusColor(request.status, colors),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          request.status,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontFamily: "uber",
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(
+                          Icons.close,
+                          color: colors.textSecondary,
+                          size: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 20,
+                            tablet: 22,
+                            desktop: 24,
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Details
-                _buildDetailRow(
-                  Icons.medical_services,
-                  "Blood Test Type",
-                  request.bloodTestType,
-                  colors,
-                ),
-                _buildDetailRow(
-                  Icons.location_on,
-                  "Location",
-                  request.location,
-                  colors,
-                ),
-                _buildDetailRow(
-                  Icons.priority_high,
-                  "Urgency",
-                  request.urgency,
-                  colors,
-                  valueColor: _getUrgencyColor(request.urgency, colors),
-                ),
-                _buildDetailRow(
-                  Icons.calendar_today,
-                  "Created",
-                  _formatDate(request.createdAt),
-                  colors,
-                ),
-                if (request.isSubmitted)
-                  _buildDetailRow(
-                    Iconsax.tick_circle,
-                    "Submitted",
-                    _formatDate(request.submittedAt!),
-                    colors,
-                    valueColor: colors.success,
+                  SizedBox(
+                    height: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: 16,
+                      tablet: 18,
+                      desktop: 20,
+                    ),
                   ),
-              ],
+
+                  // Patient info
+                  Container(
+                    padding: EdgeInsets.all(
+                      ResponsiveHelper.getResponsiveValue(
+                        context,
+                        mobile: 16,
+                        tablet: 18,
+                        desktop: 20,
+                      ),
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(
+                        ResponsiveHelper.getResponsiveValue(
+                          context,
+                          mobile: 12,
+                          tablet: 14,
+                          desktop: 16,
+                        ),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.person,
+                          size: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 48,
+                            tablet: 56,
+                            desktop: 64,
+                          ),
+                          color: colors.primary,
+                        ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 12,
+                            tablet: 14,
+                            desktop: 16,
+                          ),
+                        ),
+                        Text(
+                          request.patientName,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: ResponsiveHelper.getResponsiveFontSize(
+                              context,
+                              mobile: 18,
+                              tablet: 20,
+                              desktop: 22,
+                            ),
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                            fontFamily: "uber",
+                          ),
+                        ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 6,
+                            tablet: 7,
+                            desktop: 8,
+                          ),
+                        ),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: ResponsiveHelper.getResponsiveValue(
+                              context,
+                              mobile: 10,
+                              tablet: 11,
+                              desktop: 12,
+                            ),
+                            vertical: ResponsiveHelper.getResponsiveValue(
+                              context,
+                              mobile: 4,
+                              tablet: 5,
+                              desktop: 6,
+                            ),
+                          ),
+                          decoration: BoxDecoration(
+                            color: _getStatusColor(request.status, colors),
+                            borderRadius: BorderRadius.circular(
+                              ResponsiveHelper.getResponsiveValue(
+                                context,
+                                mobile: 16,
+                                tablet: 18,
+                                desktop: 20,
+                              ),
+                            ),
+                          ),
+                          child: Text(
+                            request.status,
+                            style: TextStyle(
+                              fontSize: ResponsiveHelper.getResponsiveFontSize(
+                                context,
+                                mobile: 11,
+                                tablet: 12,
+                                desktop: 13,
+                              ),
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: "uber",
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(
+                    height: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: 16,
+                      tablet: 18,
+                      desktop: 20,
+                    ),
+                  ),
+
+                  // Details
+                  _buildDetailRow(
+                    Icons.medical_services,
+                    "Blood Test Type",
+                    request.bloodTestType,
+                    colors,
+                  ),
+                  _buildDetailRow(
+                    Icons.location_on,
+                    "Location",
+                    request.location,
+                    colors,
+                  ),
+                  _buildDetailRow(
+                    Icons.priority_high,
+                    "Urgency",
+                    request.urgency,
+                    colors,
+                    valueColor: _getUrgencyColor(request.urgency, colors),
+                  ),
+                  _buildDetailRow(
+                    Icons.calendar_today,
+                    "Created",
+                    _formatDate(request.createdAt),
+                    colors,
+                  ),
+                  if (request.isSubmitted)
+                    _buildDetailRow(
+                      Iconsax.tick_circle,
+                      "Submitted",
+                      _formatDate(request.submittedAt!),
+                      colors,
+                      valueColor: colors.success,
+                    ),
+                ],
+              ),
             ),
           ),
         );
@@ -190,11 +308,35 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
     Color? valueColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(
+        vertical: ResponsiveHelper.getResponsiveValue(
+          context,
+          mobile: 6,
+          tablet: 7,
+          desktop: 8,
+        ),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: colors.primary, size: 20),
-          const SizedBox(width: 12),
+          Icon(
+            icon,
+            color: colors.primary,
+            size: ResponsiveHelper.getResponsiveValue(
+              context,
+              mobile: 18,
+              tablet: 19,
+              desktop: 20,
+            ),
+          ),
+          SizedBox(
+            width: ResponsiveHelper.getResponsiveValue(
+              context,
+              mobile: 10,
+              tablet: 11,
+              desktop: 12,
+            ),
+          ),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,19 +344,39 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(
+                      context,
+                      mobile: 11,
+                      tablet: 11.5,
+                      desktop: 12,
+                    ),
                     color: colors.textSecondary,
                     fontFamily: "uber",
+                  ),
+                ),
+                SizedBox(
+                  height: ResponsiveHelper.getResponsiveValue(
+                    context,
+                    mobile: 2,
+                    tablet: 2,
+                    desktop: 3,
                   ),
                 ),
                 Text(
                   value,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: ResponsiveHelper.getResponsiveFontSize(
+                      context,
+                      mobile: 14,
+                      tablet: 15,
+                      desktop: 16,
+                    ),
                     color: valueColor ?? colors.textPrimary,
                     fontWeight: FontWeight.w500,
                     fontFamily: "uber",
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
@@ -257,8 +419,6 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
   }
 
   void _showEditDialog(TestRequest request) {
-    final theme = AppTheme();
-    final colors = theme.colors;
     final _formKey = GlobalKey<FormState>();
     final TextEditingController patientNameController = TextEditingController(
       text: request.patientName,
@@ -278,20 +438,33 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
           builder: (context, theme, child) {
             return AlertDialog(
               backgroundColor: theme.colors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                  ResponsiveHelper.getResponsiveValue(
+                    context,
+                    mobile: 16,
+                    tablet: 18,
+                    desktop: 20,
+                  ),
+                ),
+              ),
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ResponsiveText(
-                    "Edit Test Request",
-                    style: TextStyle(
-                      fontFamily: 'uber',
-                      fontSize: ResponsiveHelper.getResponsiveFontSize(
-                        context,
-                        mobile: 14,
-                        tablet: 16,
-                        desktop: 18,
+                  Expanded(
+                    child: ResponsiveText(
+                      "Edit Test Request",
+                      style: TextStyle(
+                        fontFamily: 'uber',
+                        fontSize: ResponsiveHelper.getResponsiveFontSize(
+                          context,
+                          mobile: 16,
+                          tablet: 17,
+                          desktop: 18,
+                        ),
+                        color: theme.colors.textPrimary,
+                        fontWeight: FontWeight.bold,
                       ),
-                      color: theme.colors.textPrimary,
                     ),
                   ),
                   InkWell(
@@ -301,8 +474,8 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
                       color: theme.colors.textPrimary,
                       size: ResponsiveHelper.getResponsiveValue(
                         context,
-                        mobile: 24,
-                        tablet: 28,
+                        mobile: 22,
+                        tablet: 26,
                         desktop: 30,
                       ),
                     ),
@@ -311,138 +484,143 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
               ),
               content: Form(
                 key: _formKey,
-                child: SizedBox(
-                  width: ResponsiveHelper.getResponsiveValue(
-                    context,
-                    mobile: 280,
-                    tablet: 320,
-                    desktop: 360,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: ResponsiveHelper.getResponsiveValue(
+                      context,
+                      mobile: MediaQuery.of(context).size.width * 0.85,
+                      tablet: 400,
+                      desktop: 450,
+                    ),
+                    maxHeight: MediaQuery.of(context).size.height * 0.7,
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Customtextfield(
-                        controller: patientNameController,
-                        hintText: "Patient Name",
-                        validator: (value) =>
-                            value!.isEmpty ? 'Enter patient name' : null,
-                      ),
-                      SizedBox(
-                        height: ResponsiveHelper.getResponsiveValue(
-                          context,
-                          mobile: 12,
-                          tablet: 16,
-                          desktop: 20,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Customtextfield(
+                          controller: patientNameController,
+                          hintText: "Patient Name",
+                          validator: (value) =>
+                              value!.isEmpty ? 'Enter patient name' : null,
                         ),
-                      ),
-                      Customtextfield(
-                        controller: locationController,
-                        hintText: "Location",
-                        validator: (value) =>
-                            value!.isEmpty ? 'Enter location' : null,
-                      ),
-                      SizedBox(
-                        height: ResponsiveHelper.getResponsiveValue(
-                          context,
-                          mobile: 12,
-                          tablet: 16,
-                          desktop: 20,
-                        ),
-                      ),
-                      Customtextfield(
-                        controller: testTypeController,
-                        hintText: "Blood Test Type",
-                        validator: (value) =>
-                            value!.isEmpty ? 'Enter test type' : null,
-                      ),
-                      SizedBox(
-                        height: ResponsiveHelper.getResponsiveValue(
-                          context,
-                          mobile: 12,
-                          tablet: 16,
-                          desktop: 20,
-                        ),
-                      ),
-                      DropdownButtonFormField<String>(
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colors.border,
-                              width: 2.0,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colors.primary,
-                              width: 2.0,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: theme.colors.border,
-                              width: 2.0,
-                            ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 12,
+                            tablet: 16,
+                            desktop: 20,
                           ),
                         ),
-                        value: urgency,
-                        hint: ResponsiveText(
-                          "Urgency",
-                          style: TextStyle(
-                            color: theme.colors.textSecondary,
-                            fontFamily: 'uber',
+                        Customtextfield(
+                          controller: locationController,
+                          hintText: "Location",
+                          validator: (value) =>
+                              value!.isEmpty ? 'Enter location' : null,
+                        ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 12,
+                            tablet: 16,
+                            desktop: 20,
                           ),
                         ),
-                        items: ['Normal', 'Urgent'].map((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: ResponsiveText(
-                              value,
-                              style: TextStyle(
-                                fontFamily: 'uber',
-                                fontWeight: FontWeight.bold,
-                                color: theme.colors.textPrimary,
+                        Customtextfield(
+                          controller: testTypeController,
+                          hintText: "Blood Test Type",
+                          validator: (value) =>
+                              value!.isEmpty ? 'Enter test type' : null,
+                        ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 12,
+                            tablet: 16,
+                            desktop: 20,
+                          ),
+                        ),
+                        DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: theme.colors.border,
+                                width: 2.0,
                               ),
                             ),
-                          );
-                        }).toList(),
-                        onChanged: (newValue) {
-                          urgency = newValue!;
-                        },
-                      ),
-                      SizedBox(
-                        height: ResponsiveHelper.getResponsiveValue(
-                          context,
-                          mobile: 12,
-                          tablet: 16,
-                          desktop: 20,
-                        ),
-                      ),
-                      Custombutton(
-                        onTap: () async {
-                          if (_formKey.currentState!.validate()) {
-                            final testRequestProvider =
-                                Provider.of<TestRequestProvider>(
-                              context,
-                              listen: false,
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: theme.colors.primary,
+                                width: 2.0,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: theme.colors.border,
+                                width: 2.0,
+                              ),
+                            ),
+                          ),
+                          value: urgency,
+                          hint: ResponsiveText(
+                            "Urgency",
+                            style: TextStyle(
+                              color: theme.colors.textSecondary,
+                              fontFamily: 'uber',
+                            ),
+                          ),
+                          items: ['Normal', 'Urgent'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: ResponsiveText(
+                                value,
+                                style: TextStyle(
+                                  fontFamily: 'uber',
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colors.textPrimary,
+                                ),
+                              ),
                             );
-
-                            Navigator.pop(context);
-
-                            if (request.id != null) {
-                              await testRequestProvider.updateRequest(
-                                requestId: request.id!,
-                                patientName: patientNameController.text,
-                                location: locationController.text,
-                                bloodTestType: testTypeController.text,
-                                urgency: urgency,
-                                context: context,
+                          }).toList(),
+                          onChanged: (newValue) {
+                            urgency = newValue!;
+                          },
+                        ),
+                        SizedBox(
+                          height: ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 12,
+                            tablet: 16,
+                            desktop: 20,
+                          ),
+                        ),
+                        Custombutton(
+                          onTap: () async {
+                            if (_formKey.currentState!.validate()) {
+                              final testRequestProvider =
+                                  Provider.of<TestRequestProvider>(
+                                context,
+                                listen: false,
                               );
+
+                              Navigator.pop(context);
+
+                              if (request.id != null) {
+                                await testRequestProvider.updateRequest(
+                                  requestId: request.id!,
+                                  patientName: patientNameController.text,
+                                  location: locationController.text,
+                                  bloodTestType: testTypeController.text,
+                                  urgency: urgency,
+                                  context: context,
+                                );
+                              }
                             }
-                          }
-                        },
-                        text: 'Update Request',
-                      ),
-                    ],
+                          },
+                          text: 'Update Request',
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -457,7 +635,6 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
   Widget build(BuildContext context) {
     final theme = AppTheme();
     final colors = theme.colors;
-    final isMobile = ResponsiveHelper.isMobile(context);
 
     return Consumer<TestRequestProvider>(
       builder: (context, testRequestProvider, child) {
@@ -480,25 +657,56 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
                 children: [
                   // Header section
                   Container(
-                    padding: EdgeInsets.all(isMobile ? 16 : 24),
+                    padding: ResponsiveHelper.getResponsivePadding(
+                      context,
+                      mobile: const EdgeInsets.all(16),
+                      tablet: const EdgeInsets.all(20),
+                      desktop: const EdgeInsets.all(24),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(12),
+                              padding: EdgeInsets.all(
+                                ResponsiveHelper.getResponsiveValue(
+                                  context,
+                                  mobile: 10,
+                                  tablet: 12,
+                                  desktop: 14,
+                                ),
+                              ),
                               decoration: BoxDecoration(
                                 color: colors.primary.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  ResponsiveHelper.getResponsiveValue(
+                                    context,
+                                    mobile: 10,
+                                    tablet: 12,
+                                    desktop: 12,
+                                  ),
+                                ),
                               ),
                               child: Icon(
                                 Iconsax.document_text,
                                 color: colors.primary,
-                                size: 28,
+                                size: ResponsiveHelper.getResponsiveValue(
+                                  context,
+                                  mobile: 24,
+                                  tablet: 26,
+                                  desktop: 28,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            SizedBox(
+                              width: ResponsiveHelper.getResponsiveValue(
+                                context,
+                                mobile: 12,
+                                tablet: 14,
+                                desktop: 16,
+                              ),
+                            ),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,17 +714,36 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
                                   Text(
                                     "Test Requests",
                                     style: TextStyle(
-                                      fontSize: isMobile ? 24 : 28,
+                                      fontSize: ResponsiveHelper
+                                          .getResponsiveFontSize(
+                                        context,
+                                        mobile: 22,
+                                        tablet: 24,
+                                        desktop: 28,
+                                      ),
                                       fontWeight: FontWeight.bold,
                                       color: colors.textPrimary,
                                       fontFamily: "uber",
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    height: ResponsiveHelper.getResponsiveValue(
+                                      context,
+                                      mobile: 4,
+                                      tablet: 4,
+                                      desktop: 6,
+                                    ),
+                                  ),
                                   Text(
                                     "${testRequestProvider.testRequests.length} total requests",
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: ResponsiveHelper
+                                          .getResponsiveFontSize(
+                                        context,
+                                        mobile: 14,
+                                        tablet: 15,
+                                        desktop: 16,
+                                      ),
                                       color: colors.textSecondary,
                                       fontFamily: "uber",
                                     ),
@@ -539,20 +766,15 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
                             ),
                           )
                         : testRequestProvider.testRequests.isEmpty
-                            ? _buildEmptyState(colors)
-                            : ResponsiveLayout(
-                                mobile: _buildMobileList(
-                                  testRequestProvider,
-                                  colors,
-                                ),
-                                tablet: _buildTabletList(
-                                  testRequestProvider,
-                                  colors,
-                                ),
-                                desktop: _buildDesktopList(
-                                  testRequestProvider,
-                                  colors,
-                                ),
+                            ? _buildEmptyState(colors, context)
+                            : LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return _buildResponsiveList(
+                                    testRequestProvider,
+                                    colors,
+                                    constraints.maxWidth,
+                                  );
+                                },
                               ),
                   ),
                 ],
@@ -564,149 +786,221 @@ class _TestRequestsScreenState extends State<TestRequestsScreen>
     );
   }
 
-  Widget _buildEmptyState(AppColors colors) {
+  Widget _buildEmptyState(AppColors colors, BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: colors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
+      child: Padding(
+        padding: ResponsiveHelper.getResponsivePadding(
+          context,
+          mobile: const EdgeInsets.all(16),
+          tablet: const EdgeInsets.all(24),
+          desktop: const EdgeInsets.all(32),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: EdgeInsets.all(
+                ResponsiveHelper.getResponsiveValue(
+                  context,
+                  mobile: 24,
+                  tablet: 28,
+                  desktop: 32,
+                ),
+              ),
+              decoration: BoxDecoration(
+                color: colors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Iconsax.document_text,
+                size: ResponsiveHelper.getResponsiveValue(
+                  context,
+                  mobile: 48,
+                  tablet: 56,
+                  desktop: 64,
+                ),
+                color: colors.primary,
+              ),
             ),
-            child: Icon(Iconsax.document_text, size: 64, color: colors.primary),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            "No Test Requests",
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-              fontFamily: "uber",
+            SizedBox(
+              height: ResponsiveHelper.getResponsiveValue(
+                context,
+                mobile: 20,
+                tablet: 24,
+                desktop: 24,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Create a new test request to get started",
-            style: TextStyle(
-              fontSize: 16,
-              color: colors.textSecondary,
-              fontFamily: "uber",
+            Text(
+              "No Test Requests",
+              style: TextStyle(
+                fontSize: ResponsiveHelper.getResponsiveFontSize(
+                  context,
+                  mobile: 20,
+                  tablet: 22,
+                  desktop: 24,
+                ),
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+                fontFamily: "uber",
+              ),
             ),
-          ),
-        ],
+            SizedBox(
+              height: ResponsiveHelper.getResponsiveValue(
+                context,
+                mobile: 8,
+                tablet: 8,
+                desktop: 12,
+              ),
+            ),
+            Text(
+              "Create a new test request to get started",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: ResponsiveHelper.getResponsiveFontSize(
+                  context,
+                  mobile: 14,
+                  tablet: 15,
+                  desktop: 16,
+                ),
+                color: colors.textSecondary,
+                fontFamily: "uber",
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMobileList(TestRequestProvider provider, AppColors colors) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: provider.testRequests.length,
-      itemBuilder: (context, index) {
-        final request = provider.testRequests[index];
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: TestRequestCard(
-            request: request,
-            onViewDetails: () => _showRequestDetails(request),
-            onEdit: () => _showEditDialog(request),
-            onUpdateStatus: () async {
-              if (request.id != null) {
-                await provider.updateRequestStatus(
-                  requestId: request.id!,
-                  status: 'Active',
-                  context: context,
-                );
-              }
-            },
-            onDelete: () async {
-              if (request.id != null) {
-                await provider.deleteRequest(
-                  requestId: request.id!,
-                  context: context,
-                );
-              }
-            },
-          ),
+  Widget _buildResponsiveList(
+    TestRequestProvider provider,
+    AppColors colors,
+    double maxWidth,
+  ) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Calculate responsive parameters based on available width
+        double spacing = ResponsiveHelper.getResponsiveValue(
+          context,
+          mobile: 12,
+          tablet: 14,
+          desktop: 16,
         );
-      },
-    );
-  }
 
-  Widget _buildTabletList(TestRequestProvider provider, AppColors colors) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 1.2,
-      ),
-      itemCount: provider.testRequests.length,
-      itemBuilder: (context, index) {
-        final request = provider.testRequests[index];
-        return TestRequestCard(
-          request: request,
-          onViewDetails: () => _showRequestDetails(request),
-          onEdit: () => _showEditDialog(request),
-          onUpdateStatus: () async {
-            if (request.id != null) {
-              await provider.updateRequestStatus(
-                requestId: request.id!,
-                status: 'Active',
-                context: context,
-              );
-            }
-          },
-          onDelete: () async {
-            if (request.id != null) {
-              await provider.deleteRequest(
-                requestId: request.id!,
-                context: context,
-              );
-            }
-          },
+        // Calculate number of columns based on available width
+        int crossAxisCount;
+        if (maxWidth < AppTheme.mobileBreakpoint) {
+          // Mobile: Single column
+          crossAxisCount = 1;
+        } else if (maxWidth < AppTheme.tabletBreakpoint) {
+          // Tablet: 2 columns
+          crossAxisCount = 2;
+          KDebugPrint.info('Tablet: 2 columns');
+        } else if (maxWidth < AppTheme.desktopBreakpoint) {
+          // Small desktop: 3 columns
+          crossAxisCount = 3;
+          KDebugPrint.info('Small desktop: 3 columns');
+        } else {
+          // Large desktop: 4 columns
+          crossAxisCount = 4;
+          KDebugPrint.info('Large desktop: 4 columns');
+        }
+
+        // Calculate card width based on available space and number of columns
+        final padding = ResponsiveHelper.getResponsivePadding(
+          context,
+          mobile: const EdgeInsets.all(16),
+          tablet: const EdgeInsets.all(20),
+          desktop: const EdgeInsets.all(24),
         );
-      },
-    );
-  }
+        final horizontalPadding = padding.left + padding.right;
+        final availableWidth = constraints.maxWidth -
+            horizontalPadding -
+            (spacing * (crossAxisCount - 1));
+        final cardWidth = availableWidth / crossAxisCount;
 
-  Widget _buildDesktopList(TestRequestProvider provider, AppColors colors) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(24),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        crossAxisSpacing: 20,
-        mainAxisSpacing: 20,
-        childAspectRatio: 1.1,
-      ),
-      itemCount: provider.testRequests.length,
-      itemBuilder: (context, index) {
-        final request = provider.testRequests[index];
-        return TestRequestCard(
-          request: request,
-          onViewDetails: () => _showRequestDetails(request),
-          onEdit: () => _showEditDialog(request),
-          onUpdateStatus: () async {
-            if (request.id != null) {
-              await provider.updateRequestStatus(
-                requestId: request.id!,
-                status: 'Active',
-                context: context,
+        // Build list of cards
+        final cards = provider.testRequests.map((request) {
+          return SizedBox(
+            width: crossAxisCount == 1 ? null : cardWidth,
+            child: TestRequestCard(
+              request: request,
+              onViewDetails: () => _showRequestDetails(request),
+              onEdit: () => _showEditDialog(request),
+              onUpdateStatus: () async {
+                if (request.id != null) {
+                  await provider.updateRequestStatus(
+                    requestId: request.id!,
+                    status: 'Active',
+                    context: context,
+                  );
+                }
+              },
+              onDelete: () async {
+                if (request.id != null) {
+                  await provider.deleteRequest(
+                    requestId: request.id!,
+                    context: context,
+                  );
+                }
+              },
+            ),
+          );
+        }).toList();
+
+        // For mobile, use ListView
+        if (crossAxisCount == 1) {
+          return ListView.builder(
+            padding: ResponsiveHelper.getResponsivePadding(
+              context,
+              mobile: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              tablet: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              desktop: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            ),
+            itemCount: provider.testRequests.length,
+            itemBuilder: (context, index) {
+              final request = provider.testRequests[index];
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: spacing,
+                ),
+                child: TestRequestCard(
+                  request: request,
+                  onViewDetails: () => _showRequestDetails(request),
+                  onEdit: () => _showEditDialog(request),
+                  onUpdateStatus: () async {
+                    if (request.id != null) {
+                      await provider.updateRequestStatus(
+                        requestId: request.id!,
+                        status: 'Active',
+                        context: context,
+                      );
+                    }
+                  },
+                  onDelete: () async {
+                    if (request.id != null) {
+                      await provider.deleteRequest(
+                        requestId: request.id!,
+                        context: context,
+                      );
+                    }
+                  },
+                ),
               );
-            }
-          },
-          onDelete: () async {
-            if (request.id != null) {
-              await provider.deleteRequest(
-                requestId: request.id!,
-                context: context,
-              );
-            }
-          },
+            },
+          );
+        }
+
+        // For tablet and desktop, use Wrap with SingleChildScrollView
+        return SingleChildScrollView(
+          padding: padding,
+          child: Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            alignment: WrapAlignment.start,
+            runAlignment: WrapAlignment.start,
+            children: cards,
+          ),
         );
       },
     );

@@ -31,24 +31,23 @@ class TestRequestCard extends StatelessWidget {
     return Consumer<AppTheme>(
       builder: (context, theme, child) {
         return Container(
-          margin: EdgeInsets.only(
-            top: ResponsiveHelper.getResponsiveValue(
+          constraints: BoxConstraints(
+            minHeight: ResponsiveHelper.getResponsiveValue(
               context,
-              mobile: 10,
-              tablet: 10,
-              desktop: 10,
-            ),
-          ),
-          padding: EdgeInsets.only(
-            top: ResponsiveHelper.getResponsiveValue(
-              context,
-              mobile: 10,
-              tablet: 10,
-              desktop: 10,
+              mobile: 200,
+              tablet: 220,
+              desktop: 250,
             ),
           ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(
+              ResponsiveHelper.getResponsiveValue(
+                context,
+                mobile: 14,
+                tablet: 15,
+                desktop: 16,
+              ),
+            ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -60,7 +59,7 @@ class TestRequestCard extends StatelessWidget {
               context,
               mobile: const EdgeInsets.all(12),
               tablet: const EdgeInsets.all(10),
-              desktop: const EdgeInsets.all(20),
+              desktop: const EdgeInsets.all(10),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,7 +82,14 @@ class TestRequestCard extends StatelessWidget {
                           request.status,
                           colors,
                         ).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(
+                          ResponsiveHelper.getResponsiveValue(
+                            context,
+                            mobile: 8,
+                            tablet: 9,
+                            desktop: 10,
+                          ),
+                        ),
                       ),
                       child: Icon(
                         Icons.person,
@@ -153,7 +159,14 @@ class TestRequestCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: _getStatusColor(request.status, colors),
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(
+                              ResponsiveHelper.getResponsiveValue(
+                                context,
+                                mobile: 6,
+                                tablet: 7,
+                                desktop: 8,
+                              ),
+                            ),
                           ),
                           child: Text(
                             request.status,
