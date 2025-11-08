@@ -3,6 +3,7 @@ import 'package:labtest/provider/navigatorprodiver.dart';
 import 'package:labtest/provider/lab_registration_provider.dart';
 import 'package:labtest/provider/login_provider.dart';
 import 'package:labtest/provider/test_request_provider.dart';
+import 'package:labtest/provider/settings_provider.dart';
 import 'package:labtest/router/app_router.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/utils/k_debug_print.dart';
@@ -28,7 +29,15 @@ void main() async {
         ChangeNotifierProvider(create: (context) => AppTheme()),
         ChangeNotifierProvider(create: (context) => LabRegistrationProvider()),
         ChangeNotifierProvider(create: (context) => LoginProvider()),
-        ChangeNotifierProvider(create: (context) => TestRequestProvider()),
+        ChangeNotifierProvider(create: (context) => SettingsProvider()),
+        ChangeNotifierProxyProvider<SettingsProvider, TestRequestProvider>(
+          create: (context) => TestRequestProvider(),
+          update: (context, settings, provider) {
+            final testRequestProvider = provider ?? TestRequestProvider();
+            testRequestProvider.updateSettings(settings);
+            return testRequestProvider;
+          },
+        ),
       ],
       child: const MyApp(),
     ),

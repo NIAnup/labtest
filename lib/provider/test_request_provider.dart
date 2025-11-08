@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:labtest/models/test_request_model.dart';
 import 'package:labtest/utils/k_debug_print.dart';
+import 'package:labtest/provider/settings_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:labtest/utils/custom_snackbar.dart';
 
 class TestRequestProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  SettingsProvider? _settings;
 
   // State
   List<TestRequest> _testRequests = [];
@@ -32,6 +35,12 @@ class TestRequestProvider extends ChangeNotifier {
   List<TestRequest> get completedRequests =>
       _testRequests.where((r) => r.status == 'Completed').toList();
 
+  SettingsProvider? get settings => _settings;
+
+  void updateSettings(SettingsProvider settings) {
+    _settings = settings;
+  }
+
   // Setters
   set isLoading(bool value) {
     _isLoading = value;
@@ -49,7 +58,7 @@ class TestRequestProvider extends ChangeNotifier {
     String patientName = '',
     String location = '',
     String bloodTestType = '',
-    String urgency = 'Normal',
+    String? urgency,
     String? labId,
     BuildContext? context,
   }) async {
@@ -57,18 +66,28 @@ class TestRequestProvider extends ChangeNotifier {
       isLoading = true;
       error = null;
 
+      SettingsProvider? settings = _settings;
+      if (context != null) {
+        settings ??= Provider.of<SettingsProvider>(context, listen: false);
+      }
+
+      final effectiveUrgency =
+          urgency ?? settings?.defaultUrgency ?? _formUrgency;
+
       // Generate unique form link ID
       final formLinkId = _generateUniqueId();
 
       // Set expiration time to 1 hour from now
       final now = DateTime.now();
-      final expiresAt = now.add(const Duration(hours: 1));
+      final expiresAt = now.add(
+        Duration(hours: settings?.formExpiryHours ?? 1),
+      );
 
       final request = TestRequest(
         patientName: patientName,
         location: location,
         bloodTestType: bloodTestType,
-        urgency: urgency,
+        urgency: effectiveUrgency,
         status: 'New',
         formLinkId: formLinkId,
         createdAt: now,
@@ -129,32 +148,37 @@ class TestRequestProvider extends ChangeNotifier {
       final allRequests =
           snapshot.docs.map((doc) => TestRequest.fromFirestore(doc)).toList();
 
-      // Separate expired and valid requests
-      final validRequests = <TestRequest>[];
-      final expiredIds = <String>[];
+      final shouldAutoDelete = _settings?.autoDeleteExpiredForms ?? true;
 
-      for (var request in allRequests) {
-        if (request.isExpired && !request.isSubmitted) {
-          // Mark for deletion
-          if (request.id != null) {
-            expiredIds.add(request.id!);
+      if (shouldAutoDelete) {
+        // Separate expired and valid requests
+        final validRequests = <TestRequest>[];
+        final expiredIds = <String>[];
+
+        for (var request in allRequests) {
+          if (request.isExpired && !request.isSubmitted) {
+            // Mark for deletion
+            if (request.id != null) {
+              expiredIds.add(request.id!);
+            }
+          } else {
+            validRequests.add(request);
           }
-        } else {
-          validRequests.add(request);
         }
-      }
 
-      // Delete expired forms in batch
-      if (expiredIds.isNotEmpty) {
-        final batch = _firestore.batch();
-        for (var id in expiredIds) {
-          batch.delete(_firestore.collection('test_requests').doc(id));
+        if (expiredIds.isNotEmpty) {
+          final batch = _firestore.batch();
+          for (var id in expiredIds) {
+            batch.delete(_firestore.collection('test_requests').doc(id));
+          }
+          await batch.commit();
+          KDebugPrint.info('Deleted ${expiredIds.length} expired forms');
         }
-        await batch.commit();
-        KDebugPrint.info('Deleted ${expiredIds.length} expired forms');
-      }
 
-      _testRequests = validRequests;
+        _testRequests = validRequests;
+      } else {
+        _testRequests = allRequests;
+      }
 
       KDebugPrint.info('Fetched ${_testRequests.length} test requests');
     } catch (e) {

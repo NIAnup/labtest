@@ -3,12 +3,14 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:labtest/provider/navigatorprodiver.dart';
 import 'package:labtest/provider/test_request_provider.dart';
+import 'package:labtest/provider/settings_provider.dart';
 import 'package:labtest/screen/active_screen/active_screen.dart';
 import 'package:labtest/screen/complete_screen/complete_screen.dart';
 import 'package:labtest/screen/dashboard/Topappbar.dart';
 import 'package:labtest/screen/dashboard/dashboardContent.dart';
 import 'package:labtest/screen/pending_screen/pending_screen.dart';
 import 'package:labtest/screen/test_requests/test_requests_screen.dart';
+import 'package:labtest/screen/settings/settings_screen.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:labtest/utils/k_debug_print.dart';
@@ -270,8 +272,8 @@ class BloodLabHomePage extends StatelessWidget {
       NavItem(
         icon: Icons.settings,
         label: 'Settings',
-        isSelected: false,
-        onTap: () {},
+        isSelected: provider.currentIndex == 5,
+        onTap: () => provider.currentIndex = 5,
       ),
     ];
   }
@@ -343,6 +345,8 @@ class BloodLabHomePage extends StatelessWidget {
         return CompleteScreen();
       case 4:
         return TestRequestsScreen();
+      case 5:
+        return const SettingsScreen();
       default:
         return DashboardContent();
     }
@@ -353,7 +357,9 @@ class BloodLabHomePage extends StatelessWidget {
     final TextEditingController patientNameController = TextEditingController();
     final TextEditingController testTypeController = TextEditingController();
     final TextEditingController locationController = TextEditingController();
-    String urgency = 'Normal';
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
+    String urgency = settingsProvider.defaultUrgency;
 
     showDialog(
       context: context,
@@ -513,6 +519,7 @@ class BloodLabHomePage extends StatelessWidget {
     );
   }
 
+  // ignore: unused_element
   void _showViewFormDialog(BuildContext context) {
     final _formLinkController = TextEditingController();
 
@@ -612,13 +619,15 @@ class BloodLabHomePage extends StatelessWidget {
       context,
       listen: false,
     );
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
 
     // Create empty form (no patient details required)
     final formLink = await testRequestProvider.createTestRequest(
       patientName: '',
       location: '',
       bloodTestType: '',
-      urgency: 'Normal',
+      urgency: settingsProvider.defaultUrgency,
       context: context,
     );
 
