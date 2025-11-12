@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:labtest/models/test_request_model.dart';
+import 'package:labtest/provider/settings_provider.dart';
 import 'package:labtest/provider/test_request_provider.dart';
 import 'package:labtest/responsive/responsive_layout.dart';
 import 'package:labtest/store/app_theme.dart';
@@ -23,8 +24,19 @@ class ClientFormScreen extends StatefulWidget {
 class _ClientFormScreenState extends State<ClientFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController patientNameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
-  final TextEditingController bloodTestTypeController = TextEditingController();
+  final TextEditingController addressLine2Controller = TextEditingController();
+  final TextEditingController cityController = TextEditingController();
+  final TextEditingController stateController = TextEditingController();
+  final TextEditingController postalCodeController = TextEditingController();
+  final TextEditingController testsController = TextEditingController();
+  final TextEditingController notesController = TextEditingController();
+  final TextEditingController latitudeController = TextEditingController();
+  final TextEditingController longitudeController = TextEditingController();
+
+  String _selectedUrgency = 'Normal';
 
   @override
   void initState() {
@@ -38,8 +50,71 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
       listen: false,
     );
 
-    // Get the request by form link ID - this will update the provider state
-    await testRequestProvider.getRequestByFormLinkId(widget.formLinkId);
+    final request =
+        await testRequestProvider.getRequestByFormLinkId(widget.formLinkId);
+
+    if (!mounted) return;
+    if (request != null) {
+      _populateFromRequest(request);
+    }
+  }
+
+  void _populateFromRequest(TestRequest request) {
+    final submission = request.clientSubmission ?? <String, dynamic>{};
+
+    patientNameController.text =
+        (submission['patientName'] ?? request.patientName ?? '').toString();
+    locationController.text =
+        (submission['addressLine1'] ?? request.location ?? '').toString();
+    addressLine2Controller.text =
+        (submission['addressLine2'] ?? '').toString();
+    phoneController.text = (submission['phoneNumber'] ?? '').toString();
+    emailController.text = (submission['email'] ?? '').toString();
+    cityController.text = (submission['city'] ?? '').toString();
+    stateController.text = (submission['state'] ?? '').toString();
+    postalCodeController.text = (submission['postalCode'] ?? '').toString();
+    notesController.text = (submission['additionalNotes'] ?? '').toString();
+
+    final requestedTests = submission['requestedTests'];
+    if (requestedTests is List) {
+      testsController.text =
+          requestedTests.map((e) => e.toString()).join(', ');
+    } else if ((submission['bloodTestType'] ?? '').toString().isNotEmpty) {
+      testsController.text = submission['bloodTestType'].toString();
+    } else if (request.bloodTestType.isNotEmpty) {
+      testsController.text = request.bloodTestType;
+    }
+
+    final lat = submission['latitude'];
+    if (lat is num) {
+      latitudeController.text = lat.toString();
+    }
+
+    final lng = submission['longitude'];
+    if (lng is num) {
+      longitudeController.text = lng.toString();
+    }
+
+    if (locationController.text.isEmpty) {
+      locationController.text = request.location;
+    }
+
+    setState(() {
+      _selectedUrgency = request.urgency.isNotEmpty
+          ? request.urgency
+          : _selectedUrgency;
+    });
+  }
+
+  List<String> _normalizeTests(String raw) {
+    final set = <String>{};
+    for (final part in raw.split(',')) {
+      final value = part.trim();
+      if (value.isNotEmpty) {
+        set.add(value);
+      }
+    }
+    return set.toList();
   }
 
   @override
@@ -52,8 +127,17 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
     testRequestProvider.clearFormState();
 
     patientNameController.dispose();
+    phoneController.dispose();
+    emailController.dispose();
     locationController.dispose();
-    bloodTestTypeController.dispose();
+    addressLine2Controller.dispose();
+    cityController.dispose();
+    stateController.dispose();
+    postalCodeController.dispose();
+    testsController.dispose();
+    notesController.dispose();
+    latitudeController.dispose();
+    longitudeController.dispose();
     super.dispose();
   }
 
@@ -67,12 +151,44 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
       listen: false,
     );
 
+    final tests = _normalizeTests(testsController.text);
+    final lat = latitudeController.text.trim().isNotEmpty
+        ? double.tryParse(latitudeController.text.trim())
+        : null;
+    final lng = longitudeController.text.trim().isNotEmpty
+        ? double.tryParse(longitudeController.text.trim())
+        : null;
+
     final success = await testRequestProvider.submitClientForm(
       formLinkId: widget.formLinkId,
-      patientName: patientNameController.text,
-      location: locationController.text,
-      bloodTestType: bloodTestTypeController.text,
-      urgency: testRequestProvider.formUrgency,
+      patientName: patientNameController.text.trim(),
+      location: locationController.text.trim(),
+      bloodTestType: tests.join(', '),
+      requestedTests: tests,
+      urgency: _selectedUrgency,
+      phoneNumber: phoneController.text.trim().isNotEmpty
+          ? phoneController.text.trim()
+          : null,
+      email: emailController.text.trim().isNotEmpty
+          ? emailController.text.trim()
+          : null,
+      addressLine2: addressLine2Controller.text.trim().isNotEmpty
+          ? addressLine2Controller.text.trim()
+          : null,
+      city: cityController.text.trim().isNotEmpty
+          ? cityController.text.trim()
+          : null,
+      state: stateController.text.trim().isNotEmpty
+          ? stateController.text.trim()
+          : null,
+      postalCode: postalCodeController.text.trim().isNotEmpty
+          ? postalCodeController.text.trim()
+          : null,
+      latitude: lat,
+      longitude: lng,
+      additionalNotes: notesController.text.trim().isNotEmpty
+          ? notesController.text.trim()
+          : null,
       context: context,
     );
 
@@ -304,6 +420,7 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
     TestRequestProvider testRequestProvider,
   ) {
     final colors = theme.colors;
+    final settings = Provider.of<SettingsProvider>(context, listen: false);
 
     return SingleChildScrollView(
       padding: ResponsiveHelper.getResponsivePadding(
@@ -399,140 +516,155 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
                       hintText: 'Patient Name',
                       labelText: 'Patient Name',
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
+                        if (value == null || value.trim().isEmpty) {
                           return 'Please enter patient name';
                         }
                         return null;
                       },
                     ),
-                    SizedBox(
-                      height: ResponsiveHelper.getResponsiveValue(
-                        context,
-                        mobile: 16,
-                        tablet: 20,
-                        desktop: 24,
-                      ),
+                    const SizedBox(height: 12),
+                    Customtextfield(
+                      controller: phoneController,
+                      hintText: '+1 555 012 3456',
+                      labelText: 'Phone Number',
+                      keyboardType: TextInputType.phone,
                     ),
+                    const SizedBox(height: 12),
+                    Customtextfield(
+                      controller: emailController,
+                      hintText: 'client@email.com',
+                      labelText: 'Email Address',
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 12),
                     Customtextfield(
                       controller: locationController,
-                      hintText: 'Location',
-                      labelText: 'Location',
+                      hintText: 'Street, Building, Apartment',
+                      labelText: 'Address Line 1',
                       validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter location';
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please share where the collector should arrive';
                         }
                         return null;
                       },
                     ),
-                    SizedBox(
-                      height: ResponsiveHelper.getResponsiveValue(
-                        context,
-                        mobile: 16,
-                        tablet: 20,
-                        desktop: 24,
-                      ),
-                    ),
+                    const SizedBox(height: 12),
                     Customtextfield(
-                      controller: bloodTestTypeController,
-                      hintText: 'Blood Test Type',
-                      labelText: 'Blood Test Type',
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter blood test type';
-                        }
-                        return null;
-                      },
+                      controller: addressLine2Controller,
+                      hintText: 'Landmark or Neighborhood (optional)',
+                      labelText: 'Address Line 2',
                     ),
-                    SizedBox(
-                      height: ResponsiveHelper.getResponsiveValue(
-                        context,
-                        mobile: 16,
-                        tablet: 20,
-                        desktop: 24,
-                      ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Customtextfield(
+                            controller: cityController,
+                            hintText: 'City',
+                            labelText: 'City',
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Customtextfield(
+                            controller: stateController,
+                            hintText: 'State/Province',
+                            labelText: 'State/Province',
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 12),
+                    Customtextfield(
+                      controller: postalCodeController,
+                      hintText: 'ZIP/Postal Code',
+                      labelText: 'Postal Code',
+                    ),
+                    const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
+                      value: _selectedUrgency,
                       decoration: InputDecoration(
                         labelText: 'Urgency',
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            ResponsiveHelper.getResponsiveValue(
-                              context,
-                              mobile: 6,
-                              tablet: 8,
-                              desktop: 10,
-                            ),
-                          ),
                           borderSide: BorderSide(
                             color: colors.border,
                             width: 1.5,
                           ),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            ResponsiveHelper.getResponsiveValue(
-                              context,
-                              mobile: 6,
-                              tablet: 8,
-                              desktop: 10,
-                            ),
-                          ),
-                          borderSide: BorderSide(
-                            color: colors.primary,
-                            width: 2.0,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            ResponsiveHelper.getResponsiveValue(
-                              context,
-                              mobile: 6,
-                              tablet: 8,
-                              desktop: 10,
-                            ),
-                          ),
-                          borderSide: BorderSide(
-                            color: colors.border,
-                            width: 1.5,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: colors.surface,
                       ),
-                      value: testRequestProvider.formUrgency,
-                      items: ['Normal', 'Urgent'].map((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(
-                            value,
-                            style: TextStyle(
-                              fontFamily: 'uber',
-                              fontWeight: FontWeight.bold,
-                              color: colors.textPrimary,
+                      items: settings.urgencyOptions
+                          .map(
+                            (option) => DropdownMenuItem(
+                              value: option,
+                              child: Text(option, style: const TextStyle(fontFamily: 'uber')),
                             ),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (newValue) {
-                        if (newValue != null) {
-                          testRequestProvider.setFormUrgency(newValue);
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedUrgency = value;
+                          });
                         }
                       },
                     ),
-                    SizedBox(
-                      height: ResponsiveHelper.getResponsiveValue(
-                        context,
-                        mobile: 32,
-                        tablet: 40,
-                        desktop: 48,
+                    const SizedBox(height: 16),
+                    Customtextfield(
+                      controller: testsController,
+                      hintText: 'CBC, Lipid Panel, HbA1c',
+                      labelText: 'Requested Tests',
+                      maxLines: 2,
+                      validator: (value) {
+                        if (_normalizeTests(value ?? '').isEmpty) {
+                          return 'List at least one test or panel name';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Customtextfield(
+                      controller: notesController,
+                      hintText: 'Special instructions for the collector (optional)',
+                      labelText: 'Additional Notes',
+                      maxLines: 3,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Share your geo-location (optional) so nearby collectors can find you faster.',
+                      style: TextStyle(
+                        fontFamily: 'uber',
+                        fontSize: 12,
+                        color: colors.textSecondary,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Customtextfield(
+                            controller: latitudeController,
+                            hintText: 'Latitude',
+                            labelText: 'Latitude',
+                            keyboardType:
+                                const TextInputType.numberWithOptions(decimal: true),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Customtextfield(
+                            controller: longitudeController,
+                            hintText: 'Longitude',
+                            labelText: 'Longitude',
+                            keyboardType:
+                                const TextInputType.numberWithOptions(decimal: true),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
                     Custombutton(
                       onTap: testRequestProvider.isLoading ? null : _submitForm,
-                      text: testRequestProvider.isLoading
-                          ? 'Submitting...'
-                          : 'Submit Request',
-                      width: double.infinity,
+                      text: 'Submit Request',
                     ),
                   ],
                 ),

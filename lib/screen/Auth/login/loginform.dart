@@ -16,6 +16,7 @@ class LoginForm extends StatelessWidget {
       child: Consumer2<AppTheme, LoginProvider>(
         builder: (context, theme, provider, child) {
           return Form(
+            key: provider.formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

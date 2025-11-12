@@ -7,7 +7,7 @@ class TestRequest {
   final String location;
   final String bloodTestType;
   final String urgency; // 'Normal' or 'Urgent'
-  final String status; // 'New', 'Pending', 'Active', 'Completed', 'Cancelled'
+  final String status; // 'pending', 'accepted', 'in_progress', 'completed', 'cancelled'
   final String formLinkId; // Unique ID for the form link
   final DateTime createdAt;
   final DateTime? submittedAt;
@@ -22,7 +22,7 @@ class TestRequest {
     this.location = '',
     this.bloodTestType = '',
     this.urgency = 'Normal',
-    this.status = 'New',
+    this.status = 'pending',
     required this.formLinkId,
     required this.createdAt,
     this.submittedAt,
@@ -60,7 +60,7 @@ class TestRequest {
       location: data['location'] ?? '',
       bloodTestType: data['bloodTestType'] ?? '',
       urgency: data['urgency'] ?? 'Normal',
-      status: data['status'] ?? 'New',
+      status: _normalizeStatus(data['status']),
       formLinkId: data['formLinkId'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       submittedAt: (data['submittedAt'] as Timestamp?)?.toDate(),
@@ -89,7 +89,7 @@ class TestRequest {
       location: location ?? this.location,
       bloodTestType: bloodTestType ?? this.bloodTestType,
       urgency: urgency ?? this.urgency,
-      status: status ?? this.status,
+      status: status != null ? _normalizeStatus(status) : this.status,
       formLinkId: formLinkId,
       createdAt: createdAt,
       submittedAt: submittedAt ?? this.submittedAt,
@@ -104,7 +104,7 @@ class TestRequest {
   String getFormLink({bool useAbsoluteUrl = true}) {
     if (useAbsoluteUrl) {
       // In production, this would be the actual domain
-      return 'https://labtest.com/form/$formLinkId';
+      return 'https://localhost:51973/form/$formLinkId';
     } else {
       // Relative URL for in-app navigation
       return '/form/$formLinkId';
@@ -133,6 +133,30 @@ class TestRequest {
     if (isSubmitted || expiresAt == null) return null;
     final diff = expiresAt!.difference(DateTime.now());
     return diff.isNegative ? Duration.zero : diff;
+  }
+
+  static String _normalizeStatus(dynamic rawStatus) {
+    final value = rawStatus?.toString().toLowerCase().trim();
+    switch (value) {
+      case 'accepted':
+        return 'accepted';
+      case 'active':
+      case 'in_progress':
+      case 'in progress':
+        return 'in_progress';
+      case 'completed':
+        return 'completed';
+      case 'cancelled':
+      case 'canceled':
+        return 'cancelled';
+      case 'pending':
+      case 'new':
+      case '':
+      case null:
+        return 'pending';
+      default:
+        return 'pending';
+    }
   }
 }
 

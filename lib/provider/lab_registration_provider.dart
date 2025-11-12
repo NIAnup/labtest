@@ -1,11 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import 'package:labtest/utils/route_names.dart';
-import 'package:labtest/utils/k_debug_print.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:labtest/models/lab_registration_model.dart';
+import 'package:labtest/utils/k_debug_print.dart';
+import 'package:labtest/utils/route_names.dart';
 
 class LabRegistrationProvider extends ChangeNotifier {
+  LabRegistrationProvider();
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   // Form key
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -29,6 +38,7 @@ class LabRegistrationProvider extends ChangeNotifier {
   final PageController pageController = PageController();
   int _currentStep = 0;
   final int totalSteps = 4;
+  bool _isSubmitting = false;
 
   // Dropdown values
   String? _selectedIdentityProof;
@@ -42,6 +52,7 @@ class LabRegistrationProvider extends ChangeNotifier {
   File? _businessRegistrationFile;
   File? _gstCertificateFile;
   File? _clinicalLicenseFile;
+  File? _identityProofFile;
 
   // Validation patterns
   final RegExp gstPattern =
@@ -57,6 +68,8 @@ class LabRegistrationProvider extends ChangeNotifier {
   File? get businessRegistrationFile => _businessRegistrationFile;
   File? get gstCertificateFile => _gstCertificateFile;
   File? get clinicalLicenseFile => _clinicalLicenseFile;
+  File? get identityProofFile => _identityProofFile;
+  bool get isSubmitting => _isSubmitting;
 
   // Setters
   set currentStep(int value) {
@@ -96,6 +109,17 @@ class LabRegistrationProvider extends ChangeNotifier {
 
   set clinicalLicenseFile(File? value) {
     _clinicalLicenseFile = value;
+    notifyListeners();
+  }
+
+  set identityProofFile(File? value) {
+    _identityProofFile = value;
+    notifyListeners();
+  }
+
+  set isSubmitting(bool value) {
+    if (_isSubmitting == value) return;
+    _isSubmitting = value;
     notifyListeners();
   }
 
@@ -194,8 +218,7 @@ class LabRegistrationProvider extends ChangeNotifier {
       );
 
       if (result != null) {
-        // Store the file path or upload to server
-        notifyListeners();
+        identityProofFile = File(result.files.single.path!);
       }
     } catch (e) {
       print('Error picking identity document: $e');
@@ -261,25 +284,127 @@ class LabRegistrationProvider extends ChangeNotifier {
   }
 
   // Form submission
-  void submitRegistration(BuildContext context) {
-    if (validateCurrentStep()) {
-      // Here you would typically:
-      // 1. Validate all documents
-      // 2. Upload files to server
-      // 3. Save lab data to database
-      // 4. Set status to 'under_review'
-      // 5. Navigate to verification pending screen
+  Future<void> submitRegistration(BuildContext context) async {
+    if (isSubmitting) {
+      return;
+    }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Registration submitted successfully!'),
-          backgroundColor: Colors.green,
-        ),
+    final expiryDate = licenseExpiryDate;
+    final allStepsValid = _validateAllSteps();
+
+    if (!allStepsValid || expiryDate == null) {
+      _showSnackBar(
+        context,
+        'Please complete every section, including document uploads and license details.',
+      );
+      return;
+    }
+
+    isSubmitting = true;
+
+    UserCredential? credential;
+    try {
+      credential = await _auth.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      final now = DateTime.now();
+
+      final registration = LabRegistration(
+        labName: labNameController.text.trim(),
+        ownerName: ownerNameController.text.trim(),
+        contactNumber: contactNumberController.text.trim(),
+        email: emailController.text.trim(),
+        labAddress: labAddressController.text.trim(),
+        cityStatePincode: cityStatePincodeController.text.trim(),
+        identityProofType: selectedIdentityProof,
+        businessType: selectedBusinessType,
+        gstNumber:
+            isGstRegistered == 'Yes' ? gstNumberController.text.trim() : null,
+        panNumber: panNumberController.text.trim().isEmpty
+            ? null
+            : panNumberController.text.trim(),
+        isGstRegistered: isGstRegistered,
+        licenseNumber: licenseNumberController.text.trim(),
+        issuedBy: issuedByController.text.trim(),
+        licenseExpiryDate: expiryDate,
+        status: LabRegistrationStatus.underReview,
+        createdAt: now,
+        updatedAt: now,
+        authUid: credential.user?.uid,
+        emailVerified: credential.user?.emailVerified ?? false,
+        documents: _buildDocuments(),
+      );
+
+      final registrations = _firestore.collection(
+        LabRegistration.collectionName,
+      );
+
+      final docRef = registrations.doc(
+        credential.user?.uid ?? registrations.doc().id,
+      );
+
+      final registrationWithId = registration.copyWith(id: docRef.id);
+
+      try {
+        await docRef.set(registrationWithId.toFirestore());
+      } on FirebaseException catch (firestoreError) {
+        KDebugPrint.error(
+          'Failed to persist lab registration data: ${firestoreError.message}',
+        );
+
+        if (credential.user != null) {
+          try {
+            await credential.user!.delete();
+          } catch (deleteError) {
+            KDebugPrint.warning(
+              'Unable to rollback auth user after Firestore failure: $deleteError',
+            );
+          }
+        }
+        rethrow;
+      }
+
+      try {
+        await credential.user?.sendEmailVerification();
+      } catch (verificationError) {
+        KDebugPrint.warning(
+          'Failed to send email verification: $verificationError',
+        );
+      }
+
+      _showSnackBar(
+        context,
+        'Registration submitted successfully. We\'ll review and confirm shortly.',
+        backgroundColor: Colors.green,
       );
 
       KDebugPrint.success('Lab registration submitted successfully');
-      // Navigate to verification pending screen
+
+      clearForm();
+
       context.go(RouteNames.verificationPending);
+    } on FirebaseAuthException catch (authError) {
+      final message = _mapAuthErrorToMessage(authError);
+      _showSnackBar(context, message);
+      KDebugPrint.error('Firebase auth error: ${authError.code}');
+    } on FirebaseException catch (firebaseError) {
+      _showSnackBar(
+        context,
+        'We couldn\'t save your registration right now. Please try again.',
+      );
+      KDebugPrint.error(
+        'Firebase error (${firebaseError.plugin}): ${firebaseError.message}',
+      );
+    } catch (e) {
+      _showSnackBar(
+        context,
+        'Something went wrong. Please try again.',
+      );
+      KDebugPrint.error('Unexpected error during registration: $e');
+    } finally {
+      isSubmitting = false;
     }
   }
 
@@ -322,6 +447,8 @@ class LabRegistrationProvider extends ChangeNotifier {
     _businessRegistrationFile = null;
     _gstCertificateFile = null;
     _clinicalLicenseFile = null;
+    _identityProofFile = null;
+    _isSubmitting = false;
 
     notifyListeners();
   }
@@ -342,5 +469,76 @@ class LabRegistrationProvider extends ChangeNotifier {
     issuedByController.dispose();
     pageController.dispose();
     super.dispose();
+  }
+
+  bool _validateAllSteps() {
+    return _validateBasicInformation() &&
+        _validateIdentityProof() &&
+        _validateBusinessInformation() &&
+        _validateClinicalInformation();
+  }
+
+  void _showSnackBar(
+    BuildContext context,
+    String message, {
+    Color backgroundColor = Colors.red,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+      ),
+    );
+  }
+
+  List<LabDocument> _buildDocuments() {
+    return [
+      if (identityProofFile != null)
+        LabDocument(
+          type: LabDocumentTypes.identityProof,
+          label: selectedIdentityProof ?? 'Identity Proof',
+          originalFileName: _extractFileName(identityProofFile!),
+        ),
+      if (businessRegistrationFile != null)
+        LabDocument(
+          type: LabDocumentTypes.businessRegistration,
+          label: 'Business Registration Certificate',
+          originalFileName: _extractFileName(businessRegistrationFile!),
+        ),
+      if (gstCertificateFile != null)
+        LabDocument(
+          type: LabDocumentTypes.gstCertificate,
+          label: 'GST Certificate',
+          originalFileName: _extractFileName(gstCertificateFile!),
+        ),
+      if (clinicalLicenseFile != null)
+        LabDocument(
+          type: LabDocumentTypes.clinicalLicense,
+          label: 'Clinical Establishment License',
+          originalFileName: _extractFileName(clinicalLicenseFile!),
+        ),
+    ];
+  }
+
+  String _extractFileName(File file) {
+    final segments = file.path.split(Platform.pathSeparator);
+    return segments.isNotEmpty ? segments.last : file.path;
+  }
+
+  String _mapAuthErrorToMessage(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'email-already-in-use':
+        return 'This email is already registered. Try signing in instead.';
+      case 'invalid-email':
+        return 'The email address looks invalid. Please correct it.';
+      case 'weak-password':
+        return 'Please choose a stronger password (at least 6 characters).';
+      case 'operation-not-allowed':
+        return 'Email/password sign-in is not enabled for this project.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait a moment and try again.';
+      default:
+        return 'We couldn\'t create your account. Please try again.';
+    }
   }
 }

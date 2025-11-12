@@ -5,6 +5,7 @@ import 'package:labtest/screen/Auth/registration/lab_registration_form.dart';
 import 'package:labtest/screen/Auth/verification_pending_screen.dart';
 import 'package:labtest/screen/Auth/forgot_password_screen.dart';
 import 'package:labtest/screen/dashboard/dashboard.dart';
+import 'package:labtest/screen/notifications/notifications_screen.dart';
 import 'package:labtest/screen/client_form/client_form_screen.dart';
 import 'package:labtest/utils/route_names.dart';
 import 'package:labtest/utils/k_debug_print.dart';
@@ -46,6 +47,11 @@ class AppRouter {
         path: RouteNames.home,
         name: 'home',
         builder: (context, state) => BloodLabHomePage(),
+      ),
+      GoRoute(
+        path: RouteNames.notifications,
+        name: 'notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
 
       // Client Form Route

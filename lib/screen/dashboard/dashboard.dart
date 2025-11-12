@@ -20,10 +20,50 @@ import 'package:labtest/widget/Navitem.dart';
 import 'package:labtest/widget/customTextfield.dart';
 import 'package:labtest/widget/custombutton.dart';
 import 'package:labtest/widget/link_share_dialog.dart';
+import 'package:labtest/services/push_notification_service.dart';
 import 'package:provider/provider.dart';
 
-class BloodLabHomePage extends StatelessWidget {
+class BloodLabHomePage extends StatefulWidget {
   const BloodLabHomePage({Key? key}) : super(key: key);
+
+  @override
+  State<BloodLabHomePage> createState() => _BloodLabHomePageState();
+}
+
+class _BloodLabHomePageState extends State<BloodLabHomePage> {
+  final PushNotificationService _notificationService =
+      PushNotificationService.instance;
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _initializeDashboard());
+  }
+
+  Future<void> _initializeDashboard() async {
+    if (_isInitialized) return;
+
+    final settingsProvider =
+        Provider.of<SettingsProvider>(context, listen: false);
+    final testRequestProvider =
+        Provider.of<TestRequestProvider>(context, listen: false);
+
+    await testRequestProvider.fetchTestRequests();
+    await _notificationService.initialize(labId: settingsProvider.labName);
+
+    if (!mounted) return;
+
+    setState(() {
+      _isInitialized = true;
+    });
+  }
+
+  @override
+  void dispose() {
+    _notificationService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

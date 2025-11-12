@@ -5,10 +5,12 @@ import 'package:labtest/provider/login_provider.dart';
 import 'package:labtest/provider/test_request_provider.dart';
 import 'package:labtest/provider/settings_provider.dart';
 import 'package:labtest/router/app_router.dart';
+import 'package:labtest/services/push_notification_service.dart';
 import 'package:labtest/store/app_theme.dart';
 import 'package:labtest/utils/k_debug_print.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 
 NavigatorProvider navigatorProvider = NavigatorProvider();
@@ -19,6 +21,7 @@ void main() async {
   KDebugPrint.info('Initializing Blood Lab Management System');
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   KDebugPrint.success('Firebase initialized successfully');
 

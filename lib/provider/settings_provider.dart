@@ -8,11 +8,18 @@ class SettingsProvider extends ChangeNotifier {
   String _labName = 'Acme Diagnostics';
   String _contactEmail = 'support@acmediagnostics.com';
   String _contactPhone = '+1 (555) 010-2030';
+  String _ownerName = 'Dr. Sarah Lane';
+  String _labAddress = '42 Wellness Avenue, Springfield';
+  String _cityStatePincode = 'Springfield, IL 62704';
+  String _operatingHours = 'Mon-Sat • 8:00 AM - 8:00 PM';
 
   // Notification preferences
   bool _notifyOnNewRequest = true;
   bool _notifyOnPendingAging = true;
   bool _dailySummaryEmail = false;
+  bool _notifyByEmail = true;
+  bool _notifyBySms = false;
+  bool _notifyByWhatsApp = true;
 
   // Workflow defaults
   String _defaultUrgency = 'Normal';
@@ -24,14 +31,32 @@ class SettingsProvider extends ChangeNotifier {
   bool _enableTwoFactor = false;
   int _sessionTimeoutMinutes = 30;
 
+  // Terms & feedback
+  bool _acceptTerms = true;
+  DateTime? _termsAcceptedAt = DateTime.now();
+  String? _lastFeedback;
+
+  // Support + sharing
+  final String _supportPhone = '+1 (555) 010-2030';
+  final String _supportEmail = 'help@acmediagnostics.com';
+  final String _supportWhatsApp = '+1 (555) 010-2090';
+  final String _inviteLink = 'https://bloodlab.app/invite';
+
   // Getters
   String get labName => _labName;
   String get contactEmail => _contactEmail;
   String get contactPhone => _contactPhone;
+  String get ownerName => _ownerName;
+  String get labAddress => _labAddress;
+  String get cityStatePincode => _cityStatePincode;
+  String get operatingHours => _operatingHours;
 
   bool get notifyOnNewRequest => _notifyOnNewRequest;
   bool get notifyOnPendingAging => _notifyOnPendingAging;
   bool get dailySummaryEmail => _dailySummaryEmail;
+  bool get notifyByEmail => _notifyByEmail;
+  bool get notifyBySms => _notifyBySms;
+  bool get notifyByWhatsApp => _notifyByWhatsApp;
 
   String get defaultUrgency => _defaultUrgency;
   List<String> get urgencyOptions => const ['Normal', 'Urgent'];
@@ -45,6 +70,14 @@ class SettingsProvider extends ChangeNotifier {
   bool get enableTwoFactor => _enableTwoFactor;
   int get sessionTimeoutMinutes => _sessionTimeoutMinutes;
   List<int> get sessionTimeoutOptions => const [15, 30, 60, 120];
+
+  bool get acceptTerms => _acceptTerms;
+  DateTime? get termsAcceptedAt => _termsAcceptedAt;
+  String? get lastFeedback => _lastFeedback;
+  String get supportPhone => _supportPhone;
+  String get supportEmail => _supportEmail;
+  String get supportWhatsApp => _supportWhatsApp;
+  String get inviteLink => _inviteLink;
 
   // Setters
   void updateLabName(String value) {
@@ -65,6 +98,30 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updateOwnerName(String value) {
+    if (value == _ownerName) return;
+    _ownerName = value.trim();
+    notifyListeners();
+  }
+
+  void updateLabAddress(String value) {
+    if (value == _labAddress) return;
+    _labAddress = value.trim();
+    notifyListeners();
+  }
+
+  void updateCityStatePincode(String value) {
+    if (value == _cityStatePincode) return;
+    _cityStatePincode = value.trim();
+    notifyListeners();
+  }
+
+  void updateOperatingHours(String value) {
+    if (value == _operatingHours) return;
+    _operatingHours = value.trim();
+    notifyListeners();
+  }
+
   void toggleNotifyOnNewRequest(bool value) {
     if (value == _notifyOnNewRequest) return;
     _notifyOnNewRequest = value;
@@ -80,6 +137,24 @@ class SettingsProvider extends ChangeNotifier {
   void toggleDailySummaryEmail(bool value) {
     if (value == _dailySummaryEmail) return;
     _dailySummaryEmail = value;
+    notifyListeners();
+  }
+
+  void toggleNotifyByEmail(bool value) {
+    if (value == _notifyByEmail) return;
+    _notifyByEmail = value;
+    notifyListeners();
+  }
+
+  void toggleNotifyBySms(bool value) {
+    if (value == _notifyBySms) return;
+    _notifyBySms = value;
+    notifyListeners();
+  }
+
+  void toggleNotifyByWhatsApp(bool value) {
+    if (value == _notifyByWhatsApp) return;
+    _notifyByWhatsApp = value;
     notifyListeners();
   }
 
@@ -116,6 +191,18 @@ class SettingsProvider extends ChangeNotifier {
   void updateSessionTimeout(int minutes) {
     if (minutes == _sessionTimeoutMinutes) return;
     _sessionTimeoutMinutes = minutes;
+    notifyListeners();
+  }
+
+  void updateAcceptTerms(bool value) {
+    if (value == _acceptTerms) return;
+    _acceptTerms = value;
+    _termsAcceptedAt = value ? DateTime.now() : null;
+    notifyListeners();
+  }
+
+  void saveFeedback(String feedback) {
+    _lastFeedback = feedback.trim();
     notifyListeners();
   }
 }

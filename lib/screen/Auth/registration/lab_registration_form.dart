@@ -1141,6 +1141,13 @@ class LabRegistrationForm extends StatelessWidget {
 
   Widget _buildNavigationButtons(
       BuildContext context, AppTheme theme, LabRegistrationProvider provider) {
+    final isFinalStep = provider.currentStep == provider.totalSteps - 1;
+    final primaryButtonText = provider.isSubmitting
+        ? 'Submitting...'
+        : isFinalStep
+            ? 'Submit Registration'
+            : 'Next';
+
     return Container(
       padding: EdgeInsets.all(16),
       child: Row(
@@ -1149,28 +1156,32 @@ class LabRegistrationForm extends StatelessWidget {
             Expanded(
               child: Custombutton(
                 text: 'Previous',
-                onTap: () => provider.previousStep(),
+                onTap: provider.isSubmitting
+                    ? null
+                    : () => provider.previousStep(),
               ),
             ),
           if (provider.currentStep > 0) SizedBox(width: 16),
           Expanded(
             child: Custombutton(
-              text: provider.currentStep == provider.totalSteps - 1
-                  ? 'Submit Registration'
-                  : 'Next',
-              onTap: provider.currentStep == provider.totalSteps - 1
-                  ? () => provider.submitRegistration(context)
-                  : () {
-                      if (provider.validateCurrentStep()) {
-                        provider.nextStep();
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content:
-                                  Text('Please complete all required fields')),
-                        );
-                      }
-                    },
+              text: primaryButtonText,
+              onTap: provider.isSubmitting
+                  ? null
+                  : isFinalStep
+                      ? () => provider.submitRegistration(context)
+                      : () {
+                          if (provider.validateCurrentStep()) {
+                            provider.nextStep();
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Please complete all required fields',
+                                ),
+                              ),
+                            );
+                          }
+                        },
             ),
           ),
         ],

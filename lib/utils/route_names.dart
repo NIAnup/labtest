@@ -9,6 +9,7 @@ class RouteNames {
   // Dashboard Routes
   static const String dashboard = '/dashboard';
   static const String home = '/home';
+  static const String notifications = '/notifications';
 
   // Lab Management Routes
   static const String pendingRequests = '/pending-requests';

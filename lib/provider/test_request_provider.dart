@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:labtest/models/test_request_model.dart';
-import 'package:labtest/utils/k_debug_print.dart';
-import 'package:labtest/provider/settings_provider.dart';
 import 'package:provider/provider.dart';
+
+import 'package:labtest/models/client_profile.dart';
+import 'package:labtest/models/lab_details.dart';
+import 'package:labtest/models/lab_request.dart';
+import 'package:labtest/models/request_status.dart';
+import 'package:labtest/models/test_request_model.dart';
+import 'package:labtest/provider/settings_provider.dart';
+import 'package:labtest/services/firebase_request_service.dart';
 import 'package:labtest/utils/custom_snackbar.dart';
+import 'package:labtest/utils/k_debug_print.dart';
 
 class TestRequestProvider extends ChangeNotifier {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  TestRequestProvider({FirebaseRequestService? requestService})
+      : _requestService = requestService ?? FirebaseRequestService();
+
+  final FirebaseRequestService _requestService;
   SettingsProvider? _settings;
 
   // State
+  List<LabRequest> _labRequests = [];
   List<TestRequest> _testRequests = [];
   bool _isLoading = false;
   String? _error;
@@ -20,20 +30,29 @@ class TestRequestProvider extends ChangeNotifier {
   String _formUrgency = 'Normal';
 
   // Getters
+  List<LabRequest> get labRequests => _labRequests;
   List<TestRequest> get testRequests => _testRequests;
   bool get isLoading => _isLoading;
   String? get error => _error;
   TestRequest? get currentFormRequest => _currentFormRequest;
   bool get isFormAlreadySubmitted => _currentFormRequest?.isSubmitted ?? false;
   String get formUrgency => _formUrgency;
-  List<TestRequest> get newRequests =>
-      _testRequests.where((r) => r.status == 'New').toList();
-  List<TestRequest> get pendingRequests =>
-      _testRequests.where((r) => r.status == 'Pending').toList();
-  List<TestRequest> get activeRequests =>
-      _testRequests.where((r) => r.status == 'Active').toList();
-  List<TestRequest> get completedRequests =>
-      _testRequests.where((r) => r.status == 'Completed').toList();
+  List<TestRequest> get pendingRequests => _testRequests
+      .where((r) => r.status.toLowerCase() == RequestStatus.pending.value)
+      .toList();
+  List<TestRequest> get acceptedRequests => _testRequests
+      .where((r) => r.status.toLowerCase() == RequestStatus.accepted.value)
+      .toList();
+  List<TestRequest> get activeRequests => _testRequests
+      .where((r) => r.status.toLowerCase() == RequestStatus.inProgress.value)
+      .toList();
+  List<TestRequest> get inProgressRequests => activeRequests;
+  List<TestRequest> get completedRequests => _testRequests
+      .where((r) => r.status.toLowerCase() == RequestStatus.completed.value)
+      .toList();
+  List<TestRequest> get cancelledRequests => _testRequests
+      .where((r) => r.status.toLowerCase() == RequestStatus.cancelled.value)
+      .toList();
 
   SettingsProvider? get settings => _settings;
 
@@ -60,57 +79,139 @@ class TestRequestProvider extends ChangeNotifier {
     String bloodTestType = '',
     String? urgency,
     String? labId,
+    String? phoneNumber,
+    String? email,
+    String? addressLine2,
+    String? city,
+    String? state,
+    String? postalCode,
+    double? latitude,
+    double? longitude,
+    String? additionalNotes,
+    List<String>? requestedTests,
     BuildContext? context,
   }) async {
     try {
       isLoading = true;
       error = null;
 
-      SettingsProvider? settings = _settings;
-      if (context != null) {
-        settings ??= Provider.of<SettingsProvider>(context, listen: false);
+      final settings = _ensureSettings(context);
+      final effectiveUrgency =
+          (urgency ?? settings.defaultUrgency).trim().isEmpty
+              ? settings.defaultUrgency
+              : (urgency ?? settings.defaultUrgency);
+
+      final labDetails = _buildLabDetailsFromSettings(
+        settings,
+        overrideId: labId,
+      );
+
+      final trimmedName = patientName.trim();
+      final trimmedLocation = location.trim();
+      final trimmedTest = bloodTestType.trim();
+      final trimmedPhone = phoneNumber?.trim();
+      final trimmedEmail = email?.trim();
+      final trimmedAddress2 = addressLine2?.trim();
+      final trimmedCity = city?.trim();
+      final trimmedState = state?.trim();
+      final trimmedPostal = postalCode?.trim();
+      final trimmedNotes = additionalNotes?.trim();
+
+      final geoPoint = (latitude != null && longitude != null)
+          ? GeoPoint(latitude, longitude)
+          : null;
+
+      final tests = _normalizeTestList(
+        provided: requestedTests,
+        fallback: trimmedTest,
+      );
+
+      ClientProfile? clientProfile;
+      if (trimmedName.isNotEmpty ||
+          trimmedLocation.isNotEmpty ||
+          (trimmedPhone?.isNotEmpty ?? false) ||
+          (trimmedEmail?.isNotEmpty ?? false) ||
+          geoPoint != null) {
+        final names = _splitName(trimmedName);
+        clientProfile = ClientProfile(
+          firstName: names[0],
+          lastName: names[1],
+          phoneNumber:
+              trimmedPhone?.isNotEmpty == true ? trimmedPhone : null,
+          email: trimmedEmail?.isNotEmpty == true ? trimmedEmail : null,
+          addressLine1: trimmedLocation.isNotEmpty ? trimmedLocation : null,
+          addressLine2:
+              trimmedAddress2?.isNotEmpty == true ? trimmedAddress2 : null,
+          city: trimmedCity?.isNotEmpty == true ? trimmedCity : null,
+          state: trimmedState?.isNotEmpty == true ? trimmedState : null,
+          postalCode:
+              trimmedPostal?.isNotEmpty == true ? trimmedPostal : null,
+          location: geoPoint,
+          notes: trimmedNotes?.isNotEmpty == true ? trimmedNotes : null,
+        );
       }
 
-      final effectiveUrgency =
-          urgency ?? settings?.defaultUrgency ?? _formUrgency;
+      final metadata = <String, dynamic>{};
+      if (trimmedName.isNotEmpty) {
+        metadata['patientName'] = trimmedName;
+      }
+      if (trimmedLocation.isNotEmpty) {
+        metadata['addressLine1'] = trimmedLocation;
+      }
+      if (trimmedAddress2?.isNotEmpty == true) {
+        metadata['addressLine2'] = trimmedAddress2;
+      }
+      if (trimmedCity?.isNotEmpty == true) {
+        metadata['city'] = trimmedCity;
+      }
+      if (trimmedState?.isNotEmpty == true) {
+        metadata['state'] = trimmedState;
+      }
+      if (trimmedPostal?.isNotEmpty == true) {
+        metadata['postalCode'] = trimmedPostal;
+      }
+      if (trimmedPhone?.isNotEmpty == true) {
+        metadata['phoneNumber'] = trimmedPhone;
+      }
+      if (trimmedEmail?.isNotEmpty == true) {
+        metadata['email'] = trimmedEmail;
+      }
+      if (tests.isNotEmpty) {
+        metadata['requestedTests'] = tests;
+      }
+      if (trimmedTest.isNotEmpty) {
+        metadata['legacyTestType'] = trimmedTest;
+      }
+      if (geoPoint != null) {
+        metadata['coordinates'] = {
+          'lat': geoPoint.latitude,
+          'lng': geoPoint.longitude,
+        };
+      }
+      if (trimmedNotes?.isNotEmpty == true) {
+        metadata['notes'] = trimmedNotes;
+      }
 
-      // Generate unique form link ID
-      final formLinkId = _generateUniqueId();
-
-      // Set expiration time to 1 hour from now
-      final now = DateTime.now();
-      final expiresAt = now.add(
-        Duration(hours: settings?.formExpiryHours ?? 1),
-      );
-
-      final request = TestRequest(
-        patientName: patientName,
-        location: location,
-        bloodTestType: bloodTestType,
+      final request = await _requestService.createLabRequest(
+        labDetails: labDetails,
+        clientProfile: clientProfile,
+        requestedTests: tests,
         urgency: effectiveUrgency,
-        status: 'New',
-        formLinkId: formLinkId,
-        createdAt: now,
-        labId: labId,
-        expiresAt: expiresAt,
+        createdBy: labId ?? labDetails.id ?? settings.labName,
+        notes: trimmedNotes?.isNotEmpty == true ? trimmedNotes : null,
+        location: geoPoint,
+        formExpiry: Duration(hours: settings.formExpiryHours),
+        metadata: metadata.isNotEmpty ? metadata : null,
       );
 
-      // Save to Firestore
-      final docRef = await _firestore
-          .collection('test_requests')
-          .add(request.toFirestore());
-
-      KDebugPrint.success('Test request created: ${docRef.id}');
+      _upsertRequest(request);
 
       if (context != null) {
         CustomSnackBar.success(context, 'Form link created successfully!');
       }
 
-      // Refresh the list
-      await fetchTestRequests(labId: labId);
-
-      // Return the form link
-      return request.getFormLink();
+      final legacy = request.toLegacyTestRequest();
+      return legacy.getFormLink();
     } catch (e) {
       KDebugPrint.error('Error creating test request: $e');
       error = 'Failed to create test request: $e';
@@ -132,55 +233,45 @@ class TestRequestProvider extends ChangeNotifier {
       isLoading = true;
       error = null;
 
-      Query query = _firestore.collection('test_requests');
-
-      // Filter by labId if provided
-      if (labId != null) {
-        query = query.where('labId', isEqualTo: labId);
-      }
-
-      // Order by creation date
-      query = query.orderBy('createdAt', descending: true);
-
-      final snapshot = await query.get();
-
-      // Filter out expired unsubmitted forms
-      final allRequests =
-          snapshot.docs.map((doc) => TestRequest.fromFirestore(doc)).toList();
+      final effectiveLabId = labId ?? _settings?.labName;
+      final requests = await _requestService.fetchRequests(
+        labId: (effectiveLabId != null && effectiveLabId.isNotEmpty)
+            ? effectiveLabId
+            : null,
+      );
 
       final shouldAutoDelete = _settings?.autoDeleteExpiredForms ?? true;
+      final now = DateTime.now();
+      final validRequests = <LabRequest>[];
 
       if (shouldAutoDelete) {
-        // Separate expired and valid requests
-        final validRequests = <TestRequest>[];
-        final expiredIds = <String>[];
-
-        for (var request in allRequests) {
-          if (request.isExpired && !request.isSubmitted) {
-            // Mark for deletion
-            if (request.id != null) {
-              expiredIds.add(request.id!);
-            }
+        final expired = <LabRequest>[];
+        for (final request in requests) {
+          if (request.expiresAt != null &&
+              request.expiresAt!.isBefore(now) &&
+              !request.hasClientSubmission) {
+            expired.add(request);
           } else {
             validRequests.add(request);
           }
         }
 
-        if (expiredIds.isNotEmpty) {
-          final batch = _firestore.batch();
-          for (var id in expiredIds) {
-            batch.delete(_firestore.collection('test_requests').doc(id));
+        if (expired.isNotEmpty) {
+          for (final request in expired) {
+            if (request.id != null) {
+              await _requestService.deleteRequest(request.id!);
+            }
           }
-          await batch.commit();
-          KDebugPrint.info('Deleted ${expiredIds.length} expired forms');
+          KDebugPrint.info('Deleted ${expired.length} expired forms');
         }
-
-        _testRequests = validRequests;
       } else {
-        _testRequests = allRequests;
+        validRequests.addAll(requests);
       }
 
-      KDebugPrint.info('Fetched ${_testRequests.length} test requests');
+      _labRequests = validRequests;
+      _syncDerivedTestRequests();
+
+      KDebugPrint.info('Fetched ${_labRequests.length} lab requests');
     } catch (e) {
       KDebugPrint.error('Error fetching test requests: $e');
       error = 'Failed to fetch test requests: $e';
@@ -210,22 +301,19 @@ class TestRequestProvider extends ChangeNotifier {
   /// Delete all expired unsubmitted forms
   Future<int> deleteExpiredForms({String? labId}) async {
     try {
-      Query query = _firestore.collection('test_requests');
-
-      // Filter by labId if provided
-      if (labId != null) {
-        query = query.where('labId', isEqualTo: labId);
-      }
-
-      final snapshot = await query.get();
       int deletedCount = 0;
 
-      for (var doc in snapshot.docs) {
-        final request = TestRequest.fromFirestore(doc);
+      final requests = await _requestService.fetchRequests(
+        labId: labId ?? _settings?.labName,
+      );
+      final now = DateTime.now();
 
-        // Delete if expired and not submitted
-        if (request.isExpired && !request.isSubmitted) {
-          await doc.reference.delete();
+      for (final request in requests) {
+        if (request.expiresAt != null &&
+            request.expiresAt!.isBefore(now) &&
+            !request.hasClientSubmission &&
+            request.id != null) {
+          await _requestService.deleteRequest(request.id!);
           deletedCount++;
           KDebugPrint.info('Deleted expired form: ${request.formLinkId}');
         }
@@ -248,30 +336,26 @@ class TestRequestProvider extends ChangeNotifier {
   /// Returns null if form is expired or doesn't exist
   Future<TestRequest?> getRequestByFormLinkId(String formLinkId) async {
     try {
-      final snapshot = await _firestore
-          .collection('test_requests')
-          .where('formLinkId', isEqualTo: formLinkId)
-          .limit(1)
-          .get();
+      final request =
+          await _requestService.getRequestByFormLinkId(formLinkId);
 
-      if (snapshot.docs.isEmpty) {
+      if (request == null) {
         KDebugPrint.warning('No request found with formLinkId: $formLinkId');
         _currentFormRequest = null;
         notifyListeners();
         return null;
       }
 
-      final request = TestRequest.fromFirestore(snapshot.docs.first);
+      final legacy = request.toLegacyTestRequest();
 
-      // Check if form is expired
-      if (await checkFormExpiration(request)) {
+      if (await checkFormExpiration(legacy)) {
         KDebugPrint.warning('Form expired: $formLinkId');
         _currentFormRequest = null;
         notifyListeners();
         return null;
       }
 
-      _currentFormRequest = request;
+      _currentFormRequest = legacy;
       notifyListeners();
       return _currentFormRequest;
     } catch (e) {
@@ -302,6 +386,15 @@ class TestRequestProvider extends ChangeNotifier {
     required String location,
     required String bloodTestType,
     required String urgency,
+    String? phoneNumber,
+    String? email,
+    String? addressLine2,
+    String? city,
+    String? state,
+    String? postalCode,
+    double? latitude,
+    double? longitude,
+    List<String>? requestedTests,
     String? additionalNotes,
     BuildContext? context,
   }) async {
@@ -309,69 +402,99 @@ class TestRequestProvider extends ChangeNotifier {
       isLoading = true;
       error = null;
 
-      // Get the request
-      final request = await getRequestByFormLinkId(formLinkId);
-      if (request == null) {
-        if (context != null) {
-          CustomSnackBar.error(context, 'Invalid or expired form link');
-        }
-        return false;
-      }
+      final trimmedName = patientName.trim();
+      final trimmedLocation = location.trim();
+      final trimmedNotes = additionalNotes?.trim();
+      final trimmedTest = bloodTestType.trim();
+      final trimmedPhone = phoneNumber?.trim();
+      final trimmedEmail = email?.trim();
+      final trimmedAddress2 = addressLine2?.trim();
+      final trimmedCity = city?.trim();
+      final trimmedState = state?.trim();
+      final trimmedPostal = postalCode?.trim();
+      final geoPoint = (latitude != null && longitude != null)
+          ? GeoPoint(latitude, longitude)
+          : null;
+      final names = _splitName(trimmedName);
 
-      // Check if form is expired
-      if (request.isExpired) {
-        if (context != null) {
-          CustomSnackBar.error(
-            context,
-            'This form has expired. Please request a new form link.',
-          );
-        }
-        // Delete expired form
-        if (request.id != null) {
-          await _firestore
-              .collection('test_requests')
-              .doc(request.id!)
-              .delete();
-        }
-        return false;
-      }
-
-      // Check if already submitted
-      if (request.isSubmitted) {
-        if (context != null) {
-          CustomSnackBar.warning(
-            context,
-            'This form has already been submitted',
-          );
-        }
-        return false;
-      }
-
-      // Create client submission
-      final submission = ClientSubmission(
-        patientName: patientName,
-        location: location,
-        bloodTestType: bloodTestType,
-        urgency: urgency,
-        submittedAt: DateTime.now(),
-        additionalNotes: additionalNotes,
+      final clientProfile = ClientProfile(
+        firstName: names[0],
+        lastName: names[1],
+        phoneNumber:
+            trimmedPhone?.isNotEmpty == true ? trimmedPhone : null,
+        email: trimmedEmail?.isNotEmpty == true ? trimmedEmail : null,
+        addressLine1: trimmedLocation.isNotEmpty ? trimmedLocation : null,
+        addressLine2:
+            trimmedAddress2?.isNotEmpty == true ? trimmedAddress2 : null,
+        city: trimmedCity?.isNotEmpty == true ? trimmedCity : null,
+        state: trimmedState?.isNotEmpty == true ? trimmedState : null,
+        postalCode:
+            trimmedPostal?.isNotEmpty == true ? trimmedPostal : null,
+        location: geoPoint,
+        notes: trimmedNotes?.isNotEmpty == true ? trimmedNotes : null,
       );
 
-      // Update the request
-      await _firestore.collection('test_requests').doc(request.id).update({
-        'clientSubmission': submission.toMap(),
-        'submittedAt': Timestamp.fromDate(DateTime.now()),
-        'status': 'Pending', // Change status to Pending after submission
-      });
+      final tests = _normalizeTestList(
+        provided: requestedTests,
+        fallback: trimmedTest,
+      );
 
-      KDebugPrint.success('Client form submitted: $formLinkId');
+      final metadata = <String, dynamic>{};
+      if (trimmedName.isNotEmpty) {
+        metadata['patientName'] = trimmedName;
+      }
+      if (trimmedLocation.isNotEmpty) {
+        metadata['addressLine1'] = trimmedLocation;
+      }
+      if (trimmedAddress2?.isNotEmpty == true) {
+        metadata['addressLine2'] = trimmedAddress2;
+      }
+      if (trimmedCity?.isNotEmpty == true) {
+        metadata['city'] = trimmedCity;
+      }
+      if (trimmedState?.isNotEmpty == true) {
+        metadata['state'] = trimmedState;
+      }
+      if (trimmedPostal?.isNotEmpty == true) {
+        metadata['postalCode'] = trimmedPostal;
+      }
+      if (trimmedPhone?.isNotEmpty == true) {
+        metadata['phoneNumber'] = trimmedPhone;
+      }
+      if (trimmedEmail?.isNotEmpty == true) {
+        metadata['email'] = trimmedEmail;
+      }
+      if (tests.isNotEmpty) {
+        metadata['requestedTests'] = tests;
+      }
+      if (trimmedTest.isNotEmpty) {
+        metadata['legacyTestType'] = trimmedTest;
+      }
+      if (geoPoint != null) {
+        metadata['coordinates'] = {
+          'lat': geoPoint.latitude,
+          'lng': geoPoint.longitude,
+        };
+      }
+      if (trimmedNotes?.isNotEmpty == true) {
+        metadata['notes'] = trimmedNotes;
+      }
+
+      final updatedRequest = await _requestService.submitClientForm(
+        formLinkId: formLinkId,
+        clientProfile: clientProfile,
+        requestedTests: tests,
+        urgency: urgency,
+        notes: trimmedNotes,
+        location: geoPoint,
+        metadata: metadata.isNotEmpty ? metadata : null,
+      );
+
+      _upsertRequest(updatedRequest);
 
       if (context != null) {
         CustomSnackBar.success(context, 'Form submitted successfully!');
       }
-
-      // Refresh the list
-      await fetchTestRequests(labId: request.labId);
 
       return true;
     } catch (e) {
@@ -379,7 +502,9 @@ class TestRequestProvider extends ChangeNotifier {
       error = 'Failed to submit form: $e';
 
       if (context != null) {
-        CustomSnackBar.error(context, 'Failed to submit form');
+        final message =
+            e is StateError ? e.message : 'Failed to submit form';
+        CustomSnackBar.error(context, message);
       }
 
       return false;
@@ -401,21 +526,43 @@ class TestRequestProvider extends ChangeNotifier {
       isLoading = true;
       error = null;
 
-      await _firestore.collection('test_requests').doc(requestId).update({
-        'patientName': patientName,
-        'location': location,
-        'bloodTestType': bloodTestType,
-        'urgency': urgency,
-      });
+      final trimmedName = patientName.trim();
+      final trimmedLocation = location.trim();
+      final trimmedTest = bloodTestType.trim();
+      final existingIndex =
+          _labRequests.indexWhere((req) => req.id == requestId);
+      final existing = existingIndex >= 0 ? _labRequests[existingIndex] : null;
+
+      ClientProfile? clientProfile;
+      if (trimmedName.isNotEmpty || trimmedLocation.isNotEmpty) {
+        final names = _splitName(trimmedName);
+        final clientId = existing?.clientProfileId;
+        clientProfile = ClientProfile(
+          id: clientId,
+          firstName: names[0],
+          lastName: names[1],
+          addressLine1: trimmedLocation.isNotEmpty ? trimmedLocation : null,
+        );
+      }
+
+      final updated = await _requestService.updateRequest(
+        requestId: requestId,
+        requestedTests:
+            trimmedTest.isNotEmpty ? <String>[trimmedTest] : const <String>[],
+        urgency: urgency,
+        notes: existing?.notes,
+        location: existing?.location,
+        clientProfile: clientProfile,
+        metadata: existing?.metadata,
+      );
+
+      _upsertRequest(updated);
 
       KDebugPrint.success('Request updated: $requestId');
 
       if (context != null) {
         CustomSnackBar.success(context, 'Request updated successfully');
       }
-
-      // Refresh the list
-      await fetchTestRequests();
 
       return true;
     } catch (e) {
@@ -442,18 +589,22 @@ class TestRequestProvider extends ChangeNotifier {
       isLoading = true;
       error = null;
 
-      await _firestore.collection('test_requests').doc(requestId).update({
-        'status': status,
-      });
+      final targetStatus =
+          RequestStatusValue.fromValue(status.toLowerCase().trim());
+
+      final updated = await _requestService.updateStatus(
+        requestId: requestId,
+        status: targetStatus,
+        updatedBy: _settings?.labName,
+      );
+
+      _upsertRequest(updated);
 
       KDebugPrint.success('Request status updated: $requestId -> $status');
 
       if (context != null) {
         CustomSnackBar.success(context, 'Request status updated');
       }
-
-      // Refresh the list
-      await fetchTestRequests();
 
       return true;
     } catch (e) {
@@ -479,16 +630,14 @@ class TestRequestProvider extends ChangeNotifier {
       isLoading = true;
       error = null;
 
-      await _firestore.collection('test_requests').doc(requestId).delete();
+      await _requestService.deleteRequest(requestId);
+      _removeRequestById(requestId);
 
       KDebugPrint.success('Request deleted: $requestId');
 
       if (context != null) {
         CustomSnackBar.success(context, 'Request deleted successfully');
       }
-
-      // Refresh the list
-      await fetchTestRequests();
 
       return true;
     } catch (e) {
@@ -505,16 +654,110 @@ class TestRequestProvider extends ChangeNotifier {
     }
   }
 
-  /// Generate unique ID for form link
-  String _generateUniqueId() {
-    return DateTime.now().millisecondsSinceEpoch.toString() +
-        (10000 + (99999 - 10000) * (DateTime.now().microsecond / 999999))
-            .toInt()
-            .toString();
+  void _syncDerivedTestRequests() {
+    _testRequests =
+        _labRequests.map((request) => request.toLegacyTestRequest()).toList();
+  }
+
+  void _upsertRequest(LabRequest request) {
+    final updated = List<LabRequest>.of(_labRequests);
+    final index = updated.indexWhere((item) => item.id == request.id);
+    if (index >= 0) {
+      updated[index] = request;
+    } else {
+      updated.insert(0, request);
+    }
+    _labRequests = updated;
+    _syncDerivedTestRequests();
+  }
+
+  void _removeRequestById(String requestId) {
+    _labRequests =
+        _labRequests.where((request) => request.id != requestId).toList();
+    _syncDerivedTestRequests();
+  }
+
+  SettingsProvider _ensureSettings(BuildContext? context) {
+    if (_settings != null) {
+      return _settings!;
+    }
+    if (context != null) {
+      final settings =
+          Provider.of<SettingsProvider>(context, listen: false);
+      _settings = settings;
+      return settings;
+    }
+    throw StateError('SettingsProvider not available');
+  }
+
+  LabDetails _buildLabDetailsFromSettings(
+    SettingsProvider settings, {
+    String? overrideId,
+  }) {
+    final slugCandidate = overrideId?.trim().isNotEmpty == true
+        ? _slugify(overrideId!)
+        : _slugify(settings.labName);
+
+    return LabDetails(
+      id: slugCandidate.isNotEmpty ? slugCandidate : null,
+      name: settings.labName,
+      contactEmail: settings.contactEmail,
+      contactPhone: settings.contactPhone,
+      addressLine1: settings.labAddress,
+      addressLine2: settings.cityStatePincode,
+    );
+  }
+
+  List<String> _splitName(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return const ['Client', ''];
+    }
+    final parts = trimmed.split(RegExp(r'\s+'));
+    final first = parts.first;
+    final last =
+        parts.length > 1 ? parts.sublist(1).join(' ') : '';
+    return [first, last];
+  }
+
+  List<String> _normalizeTestList({
+    List<String>? provided,
+    String? fallback,
+  }) {
+    final values = <String>{};
+
+    if (provided != null) {
+      for (final item in provided) {
+        final trimmed = item.trim();
+        if (trimmed.isNotEmpty) {
+          values.add(trimmed);
+        }
+      }
+    }
+
+    if (fallback != null && fallback.trim().isNotEmpty) {
+      for (final segment in fallback.split(',')) {
+        final trimmed = segment.trim();
+        if (trimmed.isNotEmpty) {
+          values.add(trimmed);
+        }
+      }
+    }
+
+    return values.toList();
+  }
+
+  String _slugify(String value) {
+    final normalized = value
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-');
+    return normalized.replaceAll(RegExp(r'^-+|-+$'), '');
   }
 
   /// Clear all data
   void clear() {
+    _labRequests = [];
     _testRequests = [];
     _error = null;
     _isLoading = false;
